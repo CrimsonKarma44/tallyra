@@ -1,18 +1,43 @@
 import Link from "next/link";
+import Image from "next/image";
 import { logoutAction } from "@/app/actions/auth";
 
-export function Header({ username }: { username?: string }) {
+type HeaderUser = {
+  username: string;
+  displayName: string | null;
+  avatarUpdatedAt: Date | null;
+};
+
+export function Header({ user }: { user?: HeaderUser | null }) {
+  const avatarVersion = user?.avatarUpdatedAt?.getTime();
+  const label = user?.displayName?.trim() || user?.username || "";
+  const initial = label.charAt(0).toUpperCase();
+
   return (
     <header className="site-header">
-      <Link className="brand" href={username ? "/sales" : "/"}>
+      <Link className="brand" href={user ? "/sales" : "/"}>
         <span className="brand-mark">Ledger</span>
         <span className="brand-sub">POS transaction book</span>
       </Link>
-      {username ? (
+      {user ? (
         <div className="header-user">
-          <span>
-            Signed in as <strong>{username}</strong>
-          </span>
+          <Link className="user-chip" href="/settings">
+            {avatarVersion ? (
+              <Image
+                className="avatar"
+                src={`/api/me/avatar?v=${avatarVersion}`}
+                alt=""
+                width={32}
+                height={32}
+                unoptimized
+              />
+            ) : (
+              <span className="avatar avatar-fallback" aria-hidden="true">
+                {initial}
+              </span>
+            )}
+            <span>{label}</span>
+          </Link>
           <form action={logoutAction}>
             <button className="btn btn-ghost" type="submit">
               Log out

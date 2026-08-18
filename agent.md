@@ -23,9 +23,12 @@
 - Sale CRUD with line items and server-computed totals
 - Record sale (`/sales/new`) vs scan receipt (`/sales/scan` overlay then filled form)
 - Optional receiver fields on each sale
+- User settings at `/settings`: profile picture upload/remove, display name, password change
+- Top bar shows the signed-in agent's profile picture and display name (initials fallback)
+- Profile images stored as BLOBs on the `User` row; served via `/api/me/avatar` (session cookie)
 - Public REST API at `/api/v1` (bearer token) for other ledger clients
 - Local run (`npm run db:setup && npm run dev`) and Docker Compose path
-- README documents env, schema, totals, API, and optional Railway/Render/Fly deploy
+- README documents env, schema, totals, API, settings, and optional Railway/Render/Fly deploy
 - Demo video not produced
 
 ## Key Constraints for MVP
@@ -46,6 +49,7 @@ When working on this project:
 - **Auth**: Seeded agent from `AUTH_USERNAME` / `AUTH_PASSWORD`; agents can also register at `/signup`; iron-session cookie
 - **Persistence**: SQLite file (`DATABASE_URL=file:./dev.db` → `prisma/dev.db` locally, `/data/pos.db` in Docker)
 - **Money**: Integer cents; totals recomputed on the server
+- **Profile image**: Stored as a BLOB on the `User` row (no filesystem/volume); JPEG/PNG/WebP up to 2MB, served via `/api/me/avatar` for the signed-in session only
 - **Deploy**: Docker Compose is the deploy artifact; a public URL is optional
 - **Currency label**: `PHP` by default (`APP_CURRENCY`)
 - **Receipt scan**: `/sales/scan` overlay, then review form; Gemini `gemini-3.7-flash`; photos not stored

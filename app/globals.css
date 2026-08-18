@@ -87,6 +87,77 @@ a:hover {
   font-size: 0.9rem;
 }
 
+.user-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: #f7f2ea;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.user-chip:hover {
+  text-decoration: none;
+  color: #fff;
+}
+
+.avatar {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #4a5563;
+}
+
+.avatar-fallback {
+  display: inline-grid;
+  place-items: center;
+  background: var(--accent);
+  color: white;
+  font-weight: 700;
+  font-size: 1rem;
+  border-color: transparent;
+}
+
+.avatar-large {
+  width: 96px;
+  height: 96px;
+  font-size: 2.4rem;
+}
+
+.success {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  border-radius: 8px;
+  padding: 0.7rem 0.8rem;
+  margin: 0 0 1rem;
+}
+
+.settings-section {
+  margin: 0 0 0.25rem;
+}
+
+.settings-section h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1.1rem;
+}
+
+.settings-section .muted {
+  margin: 0 0 0.9rem;
+  font-size: 0.9rem;
+}
+
+.avatar-preview {
+  margin: 0 0 0.9rem;
+}
+
+.settings-divider {
+  border: none;
+  border-top: 1px solid var(--line);
+  margin: 1.5rem 0;
+}
+
 .main {
   width: min(1080px, calc(100% - 2rem));
   margin: 1.5rem auto 3rem;

@@ -28,6 +28,13 @@ export function validatePassword(password: string): string | null {
   return null;
 }
 
+export function validateDisplayName(displayName: string): string | null {
+  if (displayName.length > 40) {
+    return "Display name must be 40 characters or fewer.";
+  }
+  return null;
+}
+
 export async function verifyCredentials(username: string, password: string) {
   const user = await prisma.user.findUnique({ where: { username } });
   if (!user) {

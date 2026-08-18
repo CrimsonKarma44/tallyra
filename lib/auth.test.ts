@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { normalizeUsername, validatePassword, validateUsername } from "./auth";
+import {
+  normalizeUsername,
+  validateDisplayName,
+  validatePassword,
+  validateUsername,
+} from "./auth";
 
 describe("validateUsername", () => {
   it("accepts a simple agent name", () => {
@@ -32,5 +37,15 @@ describe("validatePassword", () => {
 describe("normalizeUsername", () => {
   it("trims surrounding space", () => {
     expect(normalizeUsername("  maria  ")).toBe("maria");
+  });
+});
+
+describe("validateDisplayName", () => {
+  it("accepts a short name", () => {
+    expect(validateDisplayName("Maria Santos")).toBeNull();
+  });
+
+  it("rejects names longer than 40 characters", () => {
+    expect(validateDisplayName("x".repeat(41))).toMatch(/40 characters/);
   });
 });

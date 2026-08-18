@@ -13,6 +13,8 @@ This is the SD-01 capstone MVP: **CRUD**, **totals**, **simple auth**, **HTTP AP
 - Search by item, note, or agent; filter by date
 - Scan a receipt photo on a separate page, then review and save
 - Optional receiver (name/company, account number, contact, address)
+- User settings (`/settings`): profile picture, display name, and password change
+- Profile picture shown in the top bar
 - REST API (`/api/v1`) so other services can read and write the same ledger
 - SQLite file storage (no external database)
 
@@ -78,11 +80,18 @@ APP_CURRENCY=PHP
 
 ## Data model
 
-- **User** — agent account (`username`, `passwordHash`); seeded on first setup, or created via `/signup`
+- **User** — agent account (`username`, `passwordHash`, optional `displayName` and avatar image bytes); seeded on first setup, or created via `/signup`
 - **Transaction** — `soldAt`, `note`, `taxRateBps`, stored cents totals, optional receiver fields, `createdBy`
 - **TransactionLine** — `name`, `quantity`, `unitPriceCents`, `lineTotalCents`
 
 Money is stored as integer cents. The server always recomputes totals on create/update; client-sent totals are ignored.
+
+### User settings
+
+`/settings` (requires sign-in) lets an agent:
+- Upload a **profile picture** (JPEG, PNG, or WebP, up to 2MB). The image is stored as a BLOB on the user row and shown in the top bar; remove it anytime.
+- Set a **display name** (shown in the top bar; blank falls back to the username).
+- **Change the password** (verify the current password first; minimum 8 characters).
 
 ### Totals
 
@@ -165,8 +174,10 @@ Response money fields: `subtotal`, `tax`, `total`, and each line’s `unitPrice`
 11. Save a sale with or without receiver fields
 12. Scan without a key → overlay error; Record sale still works
 13. Log out → landing at `/`
-14. `GET /api/v1/health` → `{ ok: true }`
-15. Login via `/api/v1/auth/login`, create/list/update/delete a sale with the bearer token
+14. `/settings` uploads a profile picture → it appears in the top bar; a bad file type is rejected
+15. Set a display name → top bar shows it; change the password with the current password
+16. `GET /api/v1/health` → `{ ok: true }`
+17. Login via `/api/v1/auth/login`, create/list/update/delete a sale with the bearer token
 
 ## Receipt scan
 
