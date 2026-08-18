@@ -10,6 +10,8 @@ This is the SD-01 capstone MVP: **CRUD**, **totals**, **simple auth**, **HTTP AP
 - Create, list, view, edit, and delete sales
 - Personal accounts see only their own sales; organization members share one ledger
 - Organizations: create one at sign-up, then the admin adds member accounts
+- Expenses (`/expenses`): record money going out, shared across the org like the sales ledger
+- Sales dashboard analytics: revenue, expenses, and net totals; a revenue-vs-expenses line chart; per-agent breakdown for orgs; best-selling items
 - Multiple line items per sale (name, quantity, unit price)
 - Server-side totals in integer cents
 - Search by item, note, or agent; filter by date
@@ -94,6 +96,7 @@ APP_CURRENCY=PHP
 - **Organization** — shared ledger (`name`, `adminId`, `members`); created at sign-up, members added by the admin
 - **Transaction** — `soldAt`, `note`, `taxRateBps`, stored cents totals, optional receiver fields, `createdBy`
 - **TransactionLine** — `name`, `quantity`, `unitPriceCents`, `lineTotalCents`
+- **Expense** — money going out (`spentAt`, `amountCents`, `note`, `createdBy`); shares the same visibility rules as sales
 
 Money is stored as integer cents. The server always recomputes totals on create/update; client-sent totals are ignored.
 
@@ -101,7 +104,19 @@ Money is stored as integer cents. The server always recomputes totals on create/
 
 - **Personal accounts** only see, edit, and delete their own sales.
 - **Organization members** share the org's full ledger for viewing; only the **admin** can edit/delete any member's sale, while other members can only edit/delete their own.
+- **Expenses** follow the same rules: personal accounts see their own; org members share the org's expenses (delete is admin-only for other people's, otherwise your own).
 - The same rules apply to the REST API: each token is scoped to its user's visibility.
+
+### Analytics
+
+The sales dashboard (`/sales`) computes analytics from the ledger in the caller's visibility scope (own data for personal accounts, the whole org for members) and the current date filter:
+
+- **Stat cards**: Revenue, Expenses, Net, Sales count, Average per sale, Tax collected, Items sold
+- **Revenue vs expenses** line chart (last 30 days by default, or the chosen date range)
+- **By agent** (organizations only): incoming (sales), outgoing (expenses), and net for each member
+- **Top items**: the five best-selling items by quantity
+
+Expenses are recorded on `/expenses` (date, amount, note); totals are shown per listed row and aggregate into the dashboard analytics.
 
 ### User settings
 
@@ -172,7 +187,7 @@ Response money fields: `subtotal`, `tax`, `total`, and each line’s `unitPrice`
 |---|---|
 | `npm run dev` | Dev server |
 | `npm run db:setup` | Apply migrations and seed |
-| `npm test` | Totals unit tests |
+| `npm test` | Unit tests |
 | `npm run verify` | Tests + typecheck + lint |
 | `npm run build` / `npm start` | Production build |
 
@@ -198,6 +213,9 @@ Response money fields: `subtotal`, `tax`, `total`, and each line’s `unitPrice`
 18. Personal accounts still can't see each other's sales (web and API)
 19. `GET /api/v1/health` → `{ ok: true }`
 20. Login via `/api/v1/auth/login`, create/list/update/delete a sale with the bearer token
+21. Record an expense at `/expenses` → the sales dashboard Revenue/Expenses/Net cards update; a solo user never sees another user's expenses
+22. Sales dashboard shows the revenue-vs-expenses chart and stat cards; an org member sees the per-agent breakdown; a solo user does not
+23. Filter by date → cards, chart, by-agent table, and top items reflect the chosen range
 
 ## Receipt scan
 

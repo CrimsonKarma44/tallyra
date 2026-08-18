@@ -1,0 +1,11 @@
+-- CreateTable
+CREATE TABLE "Expense" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    "spentAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "amountCents" INTEGER NOT NULL,
+    "note" TEXT NOT NULL DEFAULT '',
+    "createdById" TEXT NOT NULL,
+    CONSTRAINT "Expense_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);

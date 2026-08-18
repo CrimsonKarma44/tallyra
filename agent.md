@@ -29,6 +29,8 @@
 - Optional receiver fields on each sale
 - User settings at `/settings`: profile picture upload/remove, display name, password change
 - Top bar shows the signed-in agent's profile picture and display name (initials fallback)
+- Expenses at `/expenses`: record money going out (date, amount, note); same visibility rules as sales (own for solo, shared org ledger for members)
+- Sales dashboard analytics: stat cards (revenue, expenses, net, count, average, tax, items sold), a server-rendered SVG revenue-vs-expenses line chart, per-agent breakdown for orgs (incoming/outgoing/net), and top items; honors the date filter and visibility scope
 - Profile images stored as BLOBs on the `User` row; served via `/api/me/avatar` (session cookie)
 - Public REST API at `/api/v1` (bearer token) for other ledger clients
 - Local run (`npm run db:setup && npm run dev`) and Docker Compose path
@@ -61,6 +63,8 @@ When working on this project:
 - **HTTP API**: `/api/v1` JSON + bearer tokens so other services can share the ledger
 - **Sales isolation**: solo users scope to `createdById`; org members scope to `createdBy.organizationId` (view), and edits use `editScope` (org admin → whole org, others → own sales); out-of-scope access returns 404 "Sale not found."
 - **Organizations**: single admin (`Organization.adminId`, unique) created at sign-up; members added only by the admin; no self-join, member removal, or org deletion in this pass
+- **Expenses**: `spentAt`, `amountCents`, `note`, `createdBy`; reuses the sales scope helpers (view scope for listing, edit scope for delete — org admin can delete any org expense, others their own); amount must be > 0; note ≤ 200 chars
+- **Analytics**: pure aggregation in `lib/analytics.ts` (no DB dependency, unit-tested); day-key bucketing in local time with zero-filled ranges (last 30 days when unfiltered); chart is hand-rolled SVG (no chart library)
 
 ## Out of scope
 - Demo video
@@ -70,6 +74,8 @@ When working on this project:
 - Payments, change due, refunds
 - Multi-store / offline sync
 - Org self-join, member removal, org rename/delete, multiple admins
+- Expense editing, categories, expense REST endpoints
+- Chart interactivity (tooltips/legend toggle); analytics export
 
 ## Next Immediate Steps
 - Record the optional 2–3 minute demo video if a course deliverable still requires it

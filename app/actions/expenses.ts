@@ -1,0 +1,64 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { prisma } from "@/lib/prisma";
+import { editScope } from "@/lib/sales-service";
+import { requireUser } from "@/lib/session";
+import { ExpenseValidationError, expenseListWhere, parseExpenseWrite } from "@/lib/expenses";
+
+export type ExpenseActionState = { error?: string } | null;
+
+export async function createExpense(
+  prevState: ExpenseActionState,
+  formData: FormData,
+): Promise<ExpenseActionState> {
+  const user = await requireUser();
+  try {
+    const { spentAt, amountCents, note } = parseExpenseWrite({
+      spentAt: String(formData.get("spentAt") ?? "") || undefined,
+      amount: String(formData.get("amount") ?? ""),
+      note: String(formData.get("note") ?? ""),
+    });
+    await prisma.expense.create({
+      data: { spentAt, amountCents, note, createdById: user.userId },
+    });
+  } catch (error) {
+    if (error instanceof ExpenseValidationError) {
+      return { error: error.message };
+    }
+    if (error instanceof Error && error.message) {
+      return { error: error.message };
+    }
+    return { error: "Could not save the expense." };
+  }
+  revalidatePath("/expenses");
+  revalidatePath("/sales");
+  redirect("/expenses");
+}
+
+export async function deleteExpense(formData: FormData) {
+  const user = await requireUser();
+  const id = String(formData.get("id") ?? "");
+  if (!id) {
+    return;
+  }
+  await prisma.expense.deleteMany({
+    where: { id, ...editScope({ id: user.userId, organizationId: user.organizationId, isOrgAdmin: user.isOrgAdmin }) },
+  });
+  revalidatePath("/expenses");
+  revalidatePath("/sales");
+  redirect("/expenses");
+}
+
+export async function listExpenses(params: { from?: string; to?: string }) {
+  const user = await requireUser();
+  return prisma.expense.findMany({
+    where: expenseListWhere(
+      { id: user.userId, organizationId: user.organizationId },
+      params,
+    ),
+    include: { createdBy: { select: { username: true } } },
+    orderBy: { spentAt: "desc" },
+  });
+}
