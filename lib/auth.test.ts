@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   normalizeUsername,
   validateDisplayName,
+  validateEmail,
   validateOrgName,
   validatePassword,
   validateUsername,
@@ -62,5 +63,31 @@ describe("validateOrgName", () => {
 
   it("rejects symbols", () => {
     expect(validateOrgName("Bayan@Store")).toMatch(/3–40/);
+  });
+});
+
+describe("validateEmail", () => {
+  it("accepts a normal address", () => {
+    expect(validateEmail("maria@example.com")).toBeNull();
+  });
+
+  it("trims surrounding space", () => {
+    expect(validateEmail("  maria@example.com  ")).toBeNull();
+  });
+
+  it("rejects a missing email", () => {
+    expect(validateEmail("")).toMatch(/required/);
+  });
+
+  it("rejects an address without a domain", () => {
+    expect(validateEmail("maria@")).toMatch(/valid email/);
+  });
+
+  it("rejects an address without an @", () => {
+    expect(validateEmail("maria.example.com")).toMatch(/valid email/);
+  });
+
+  it("rejects an overly long address", () => {
+    expect(validateEmail(`${"a".repeat(250)}@example.com`)).toMatch(/valid email/);
   });
 });

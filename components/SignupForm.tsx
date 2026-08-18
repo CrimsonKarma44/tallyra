@@ -24,6 +24,12 @@ export function SignupForm({ action, nextPath }: Props) {
       </p>
       <p>
         <label>
+          Email
+          <input name="email" type="email" autoComplete="email" required maxLength={254} />
+        </label>
+      </p>
+      <p>
+        <label>
           Password
           <input name="password" type="password" autoComplete="new-password" required minLength={8} />
         </label>
@@ -61,10 +67,16 @@ export function SignupForm({ action, nextPath }: Props) {
           </span>
         </label>
         {accountType === "create-org" ? (
-          <label className="org-name-field">
-            Organization name
-            <input name="orgName" autoComplete="organization" minLength={3} maxLength={40} />
-          </label>
+          <>
+            <label className="org-name-field">
+              Organization name
+              <input name="orgName" autoComplete="organization" minLength={3} maxLength={40} />
+            </label>
+            <label className="org-name-field">
+              Company email (for alerts)
+              <input name="orgEmail" type="email" maxLength={254} />
+            </label>
+          </>
         ) : null}
       </fieldset>
       <div className="btn-row">

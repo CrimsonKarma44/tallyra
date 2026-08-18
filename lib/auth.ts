@@ -1,12 +1,25 @@
 import bcrypt from "bcryptjs";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { isMailConfigured } from "@/lib/mail";
 
 const USERNAME_PATTERN = /^[a-zA-Z0-9._-]{3,32}$/;
 const ORG_NAME_PATTERN = /^[a-zA-Z0-9 ._-]{3,40}$/;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function normalizeUsername(raw: string): string {
   return raw.trim();
+}
+
+export function validateEmail(email: string): string | null {
+  const trimmed = email.trim();
+  if (!trimmed) {
+    return "Email is required.";
+  }
+  if (trimmed.length > 254 || !EMAIL_PATTERN.test(trimmed)) {
+    return "Enter a valid email address.";
+  }
+  return null;
 }
 
 export function validateUsername(username: string): string | null {
@@ -47,7 +60,10 @@ export function validateOrgName(orgName: string): string | null {
 }
 
 export async function verifyCredentials(username: string, password: string) {
-  const user = await prisma.user.findUnique({ where: { username } });
+  const user = await prisma.user.findUnique({
+    where: { username },
+    select: { id: true, username: true, organizationId: true, passwordHash: true },
+  });
   if (!user) {
     return null;
   }
@@ -55,14 +71,31 @@ export async function verifyCredentials(username: string, password: string) {
   if (!ok) {
     return null;
   }
-  return { id: user.id, username: user.username };
+  return user;
 }
 
-export async function createUser(username: string, password: string) {
+/** When SMTP is not configured, new accounts are auto-verified and no emails are sent. */
+export function emailVerifiedAtForNewAccount(): Date | null {
+  return isMailConfigured() ? null : new Date();
+}
+
+export async function createUser(username: string, password: string, email: string) {
   const passwordHash = await bcrypt.hash(password, 10);
+  const existingPersonal = await prisma.user.findFirst({
+    where: { email, organizationId: null },
+    select: { id: true },
+  });
+  if (existingPersonal) {
+    return { ok: false as const, error: "That email already has a personal account." };
+  }
   try {
     const user = await prisma.user.create({
-      data: { username, passwordHash },
+      data: {
+        username,
+        passwordHash,
+        email,
+        emailVerifiedAt: emailVerifiedAtForNewAccount(),
+      },
       select: { id: true, username: true },
     });
     return { ok: true as const, user };

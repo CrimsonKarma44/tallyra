@@ -18,6 +18,10 @@ export function AddMemberForm() {
         <input name="username" autoComplete="off" required minLength={3} maxLength={32} />
       </label>
       <label>
+        Email
+        <input name="email" type="email" autoComplete="off" required maxLength={254} />
+      </label>
+      <label>
         Password
         <input name="password" type="password" autoComplete="new-password" required minLength={8} />
       </label>

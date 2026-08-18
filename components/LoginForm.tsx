@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import Link from "next/link";
 import type { AuthState } from "@/app/actions/auth";
 
 type Props = {
@@ -27,6 +28,9 @@ export function LoginForm({ action, nextPath }: Props) {
           <input name="password" type="password" autoComplete="current-password" required />
         </label>
       </p>
+      <div className="forgot-row">
+        <Link href="/forgot-password">Forgot password?</Link>
+      </div>
       <div className="btn-row">
         <button className="btn" type="submit" disabled={pending}>
           {pending ? "Signing in…" : "Sign in"}

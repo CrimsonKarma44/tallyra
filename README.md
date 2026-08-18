@@ -20,6 +20,8 @@ This is the SD-01 capstone MVP: **CRUD**, **totals**, **simple auth**, **HTTP AP
 - User settings (`/settings`): profile picture, display name, and password change
 - Profile picture shown in the top bar
 - Organizations at `/org`: shared ledger plus an admin who adds member accounts
+- Signup email verification, forgot-password reset, and org alert emails via optional SMTP (auto-verified when SMTP is unset)
+- Emails are unique per context: one account per email within each org, one personal account per email, unique company emails
 - REST API (`/api/v1`) so other services can read and write the same ledger
 - SQLite file storage (no external database)
 
@@ -57,6 +59,8 @@ At `/signup` you pick an account type:
 - **Personal** — your own private sales book (each agent sees only their own sales).
 - **Create an organization** — you become the org's **admin** and its first member. Every member shares one ledger at `/sales`, and the list shows who recorded each sale (Agent column). The admin adds member accounts from the **Organization** page (`/org`); members can view all org sales but only edit/delete their own.
 
+Both options require an email address. When SMTP is configured, the account must be verified by the emailed code before the banner clears.
+
 ## Environment
 
 | Variable | Purpose |
@@ -68,6 +72,12 @@ At `/signup` you pick an account type:
 | `APP_CURRENCY` | Display currency, default `PHP` |
 | `GEMINI_API_KEY` | Gemini key for receipt scan. Optional; manual entry works without it |
 | `GEMINI_MODEL` | Vision model, default `gemini-3.7-flash` |
+| `SMTP_HOST` / `SMTP_USER` / `SMTP_PASS` | SMTP for reset/verification/alert emails. Unset → accounts auto-verified, no emails |
+| `SMTP_PORT` | Default `587` (STARTTLS) |
+| `SMTP_SECURE` | `false` for STARTTLS, `true` for implicit TLS (465) |
+| `SMTP_FROM` | Sender address; defaults to `SMTP_USER` |
+
+When SMTP is configured, sign-up requires a verifiable email: a 6-digit code is emailed and accounts show a "verify your email" banner until confirmed (`/verify-email`, code valid 60 min). Forgot-password flow: `/forgot-password` → 6-digit reset code (valid 15 min, single-use, max 5 attempts) → `/reset-password`. Org admins also get alerts when a member is added or signs in.
 
 ## Docker
 
@@ -146,7 +156,7 @@ Other services authenticate with a bearer token from login (or signup). Tokens a
 |---|---|---|---|
 | `GET` | `/api/v1/health` | no | Liveness |
 | `POST` | `/api/v1/auth/login` | no | `{ username, password }` → `{ token, userId, username }` |
-| `POST` | `/api/v1/auth/signup` | no | Create an agent and return a token |
+| `POST` | `/api/v1/auth/signup` | no | Create an agent and return a token (`email` is required) |
 | `GET` | `/api/v1/me` | yes | Current token user |
 | `GET` | `/api/v1/sales` | yes | List the sales visible to the caller (`q`, `from`, `to` query params) |
 | `GET` | `/api/v1/sales/:id` | yes | One sale visible to the caller |

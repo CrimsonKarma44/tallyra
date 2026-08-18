@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, Source_Sans_3 } from "next/font/google";
 import { Header } from "@/components/Header";
+import { VerifyBanner } from "@/components/VerifyBanner";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import "./globals.css";
@@ -30,6 +31,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     organizationId: string | null;
     organizationName: string | null;
   } | null = null;
+  let needsVerification = false;
   if (session.userId) {
     const record = await prisma.user.findUnique({
       where: { id: session.userId },
@@ -38,6 +40,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         displayName: true,
         avatarUpdatedAt: true,
         organizationId: true,
+        email: true,
+        emailVerifiedAt: true,
         organization: { select: { name: true } },
       },
     });
@@ -49,6 +53,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         organizationId: record.organizationId,
         organizationName: record.organization?.name ?? null,
       };
+      needsVerification = Boolean(record.email && !record.emailVerifiedAt);
     }
   }
   return (
@@ -56,6 +61,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className={`${sans.variable} ${mono.variable}`}>
         <div className="app-shell">
           <Header user={user} />
+          {needsVerification ? <VerifyBanner /> : null}
           {children}
         </div>
       </body>

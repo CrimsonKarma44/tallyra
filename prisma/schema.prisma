@@ -11,6 +11,8 @@ model User {
   id              String        @id @default(cuid())
   username        String        @unique
   passwordHash    String
+  email           String?
+  emailVerifiedAt DateTime?
   displayName     String?
   avatar          Bytes?
   avatarMime      String?
@@ -21,11 +23,15 @@ model User {
   createdAt       DateTime      @default(now())
   sales           Transaction[]
   expenses        Expense[]
+  authTokens      AuthToken[]
+
+  @@unique([organizationId, email])
 }
 
 model Organization {
   id        String   @id @default(cuid())
   name      String   @unique
+  email     String?  @unique
   adminId   String   @unique
   admin     User     @relation("OrgAdmin", fields: [adminId], references: [id])
   members   User[]   @relation("OrgMember")
@@ -60,6 +66,20 @@ model Expense {
   note        String   @default("")
   createdById String
   createdBy   User     @relation(fields: [createdById], references: [id])
+}
+
+model AuthToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      String
+  codeHash  String
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId, kind])
 }
 
 model TransactionLine {

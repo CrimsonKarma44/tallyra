@@ -7,12 +7,13 @@ const prisma = new PrismaClient();
 async function main() {
   const username = process.env.AUTH_USERNAME?.trim() || "agent";
   const password = process.env.AUTH_PASSWORD || "changeme";
+  const email = process.env.AUTH_EMAIL?.trim() || null;
   const passwordHash = await bcrypt.hash(password, 10);
 
   const user = await prisma.user.upsert({
     where: { username },
-    update: { passwordHash },
-    create: { username, passwordHash },
+    update: { passwordHash, email },
+    create: { username, passwordHash, email },
   });
 
   const existingSales = await prisma.transaction.count();

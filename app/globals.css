@@ -48,6 +48,23 @@ a:hover {
   flex-direction: column;
 }
 
+.verify-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.7rem 1.4rem;
+  background: #fdf3d9;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.92rem;
+  color: var(--ink-soft);
+}
+
+.verify-banner a {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .site-header {
   display: flex;
   align-items: center;
@@ -153,6 +170,27 @@ a:hover {
 
 .org-name-field {
   margin-top: 0.2rem;
+}
+
+.forgot-row {
+  margin: 0.5rem 0 0;
+  font-size: 0.9rem;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.resend-form {
+  margin-top: 0.75rem;
 }
 
 .add-member {
