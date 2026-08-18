@@ -23,12 +23,33 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
-  let user: { username: string; displayName: string | null; avatarUpdatedAt: Date | null } | null = null;
+  let user: {
+    username: string;
+    displayName: string | null;
+    avatarUpdatedAt: Date | null;
+    organizationId: string | null;
+    organizationName: string | null;
+  } | null = null;
   if (session.userId) {
-    user = await prisma.user.findUnique({
+    const record = await prisma.user.findUnique({
       where: { id: session.userId },
-      select: { username: true, displayName: true, avatarUpdatedAt: true },
+      select: {
+        username: true,
+        displayName: true,
+        avatarUpdatedAt: true,
+        organizationId: true,
+        organization: { select: { name: true } },
+      },
     });
+    if (record) {
+      user = {
+        username: record.username,
+        displayName: record.displayName,
+        avatarUpdatedAt: record.avatarUpdatedAt,
+        organizationId: record.organizationId,
+        organizationName: record.organization?.name ?? null,
+      };
+    }
   }
   return (
     <html lang="en">

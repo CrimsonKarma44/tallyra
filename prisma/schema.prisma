@@ -15,8 +15,21 @@ model User {
   avatar          Bytes?
   avatarMime      String?
   avatarUpdatedAt DateTime?
+  organizationId  String?
+  organization    Organization? @relation("OrgMember", fields: [organizationId], references: [id])
+  orgAdminOf      Organization? @relation("OrgAdmin")
   createdAt       DateTime      @default(now())
   sales           Transaction[]
+  expenses        Expense[]
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  adminId   String   @unique
+  admin     User     @relation("OrgAdmin", fields: [adminId], references: [id])
+  members   User[]   @relation("OrgMember")
+  createdAt DateTime @default(now())
 }
 
 model Transaction {
@@ -36,6 +49,17 @@ model Transaction {
   receiverContact  String?
   receiverAddress  String?
   lines            TransactionLine[]
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  spentAt     DateTime @default(now())
+  amountCents Int
+  note        String   @default("")
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id])
 }
 
 model TransactionLine {

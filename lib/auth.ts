@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 const USERNAME_PATTERN = /^[a-zA-Z0-9._-]{3,32}$/;
+const ORG_NAME_PATTERN = /^[a-zA-Z0-9 ._-]{3,40}$/;
 
 export function normalizeUsername(raw: string): string {
   return raw.trim();
@@ -31,6 +32,16 @@ export function validatePassword(password: string): string | null {
 export function validateDisplayName(displayName: string): string | null {
   if (displayName.length > 40) {
     return "Display name must be 40 characters or fewer.";
+  }
+  return null;
+}
+
+export function validateOrgName(orgName: string): string | null {
+  if (!orgName) {
+    return "Organization name is required.";
+  }
+  if (!ORG_NAME_PATTERN.test(orgName)) {
+    return "Organization name must be 3–40 characters: letters, numbers, spaces, dots, hyphens, or underscores.";
   }
   return null;
 }

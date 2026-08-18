@@ -63,6 +63,7 @@ export default async function SalesPage({
               <tr>
                 <th>Sold at</th>
                 <th>Receiver</th>
+                <th>Agent</th>
                 <th>Items</th>
                 <th>Note</th>
                 <th className="num">Total</th>
@@ -77,6 +78,7 @@ export default async function SalesPage({
                     </Link>
                   </td>
                   <td>{sale.receiverName || "—"}</td>
+                  <td>{sale.createdBy.username}</td>
                   <td>{sale.lines.length}</td>
                   <td>{sale.note || "—"}</td>
                   <td className="num">{formatCents(sale.totalCents)}</td>

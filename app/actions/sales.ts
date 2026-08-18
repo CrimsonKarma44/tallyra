@@ -5,11 +5,19 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { pesosToCents } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
-import { saleQueryWhere } from "@/lib/sales-service";
+import { editScope, saleQueryWhere, saleScope, type UserContext } from "@/lib/sales-service";
 import { requireUser } from "@/lib/session";
 import { computeTotals, SaleValidationError, type LineInput } from "@/lib/totals";
 
 export type SaleActionState = { error?: string } | null;
+
+function userContext(user: {
+  userId: string;
+  organizationId: string | null;
+  isOrgAdmin: boolean;
+}): UserContext {
+  return { id: user.userId, organizationId: user.organizationId, isOrgAdmin: user.isOrgAdmin };
+}
 
 const lineSchema = z.object({
   name: z.string(),
@@ -135,7 +143,7 @@ export async function updateSale(
   }
   try {
     const existing = await prisma.transaction.findUnique({
-      where: { id, createdById: user.userId },
+      where: { id, ...editScope(userContext(user)) },
     });
     if (!existing) {
       return { error: "Sale not found." };
@@ -187,7 +195,7 @@ export async function deleteSale(formData: FormData) {
   if (!id) {
     return;
   }
-  await prisma.transaction.deleteMany({ where: { id, createdById: user.userId } });
+  await prisma.transaction.deleteMany({ where: { id, ...editScope(userContext(user)) } });
   revalidatePath("/sales");
   redirect("/sales");
 }
@@ -195,8 +203,9 @@ export async function deleteSale(formData: FormData) {
 export async function listSales(params: { q?: string; from?: string; to?: string }) {
   const user = await requireUser();
   return prisma.transaction.findMany({
-    where: saleQueryWhere(user.userId, params),
+    where: saleQueryWhere(userContext(user), params),
     include: {
+      createdBy: { select: { username: true } },
       lines: { select: { id: true } },
     },
     orderBy: { soldAt: "desc" },
@@ -206,9 +215,9 @@ export async function listSales(params: { q?: string; from?: string; to?: string
 export async function getSale(id: string) {
   const user = await requireUser();
   return prisma.transaction.findUnique({
-    where: { id, createdById: user.userId },
+    where: { id, ...saleScope(userContext(user)) },
     include: {
-      createdBy: { select: { username: true } },
+      createdBy: { select: { id: true, username: true } },
       lines: { orderBy: { sortOrder: "asc" } },
     },
   });

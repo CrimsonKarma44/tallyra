@@ -8,7 +8,8 @@ This is the SD-01 capstone MVP: **CRUD**, **totals**, **simple auth**, **HTTP AP
 
 - Sign in with a seeded agent account, or create a new agent account
 - Create, list, view, edit, and delete sales
-- Sales are scoped to the signed-in agent — no one sees or edits another user's records
+- Personal accounts see only their own sales; organization members share one ledger
+- Organizations: create one at sign-up, then the admin adds member accounts
 - Multiple line items per sale (name, quantity, unit price)
 - Server-side totals in integer cents
 - Search by item, note, or agent; filter by date
@@ -16,6 +17,7 @@ This is the SD-01 capstone MVP: **CRUD**, **totals**, **simple auth**, **HTTP AP
 - Optional receiver (name/company, account number, contact, address)
 - User settings (`/settings`): profile picture, display name, and password change
 - Profile picture shown in the top bar
+- Organizations at `/org`: shared ledger plus an admin who adds member accounts
 - REST API (`/api/v1`) so other services can read and write the same ledger
 - SQLite file storage (no external database)
 
@@ -45,6 +47,13 @@ Default seeded login (change these in `.env`), or create a new account at `/sign
 |---|---|
 | Username | `agent` |
 | Password | `changeme` |
+
+### Sign-up options
+
+At `/signup` you pick an account type:
+
+- **Personal** — your own private sales book (each agent sees only their own sales).
+- **Create an organization** — you become the org's **admin** and its first member. Every member shares one ledger at `/sales`, and the list shows who recorded each sale (Agent column). The admin adds member accounts from the **Organization** page (`/org`); members can view all org sales but only edit/delete their own.
 
 ## Environment
 
@@ -81,11 +90,18 @@ APP_CURRENCY=PHP
 
 ## Data model
 
-- **User** — agent account (`username`, `passwordHash`, optional `displayName` and avatar image bytes); seeded on first setup, or created via `/signup`
+- **User** — agent account (`username`, `passwordHash`, optional `displayName` and avatar image bytes, optional `organizationId`); seeded on first setup, or created via `/signup`
+- **Organization** — shared ledger (`name`, `adminId`, `members`); created at sign-up, members added by the admin
 - **Transaction** — `soldAt`, `note`, `taxRateBps`, stored cents totals, optional receiver fields, `createdBy`
 - **TransactionLine** — `name`, `quantity`, `unitPriceCents`, `lineTotalCents`
 
 Money is stored as integer cents. The server always recomputes totals on create/update; client-sent totals are ignored.
+
+### Ledger visibility
+
+- **Personal accounts** only see, edit, and delete their own sales.
+- **Organization members** share the org's full ledger for viewing; only the **admin** can edit/delete any member's sale, while other members can only edit/delete their own.
+- The same rules apply to the REST API: each token is scoped to its user's visibility.
 
 ### User settings
 
@@ -117,13 +133,13 @@ Other services authenticate with a bearer token from login (or signup). Tokens a
 | `POST` | `/api/v1/auth/login` | no | `{ username, password }` → `{ token, userId, username }` |
 | `POST` | `/api/v1/auth/signup` | no | Create an agent and return a token |
 | `GET` | `/api/v1/me` | yes | Current token user |
-| `GET` | `/api/v1/sales` | yes | List the **caller's** sales (`q`, `from`, `to` query params) |
-| `GET` | `/api/v1/sales/:id` | yes | One of the caller's sales |
+| `GET` | `/api/v1/sales` | yes | List the sales visible to the caller (`q`, `from`, `to` query params) |
+| `GET` | `/api/v1/sales/:id` | yes | One sale visible to the caller |
 | `POST` | `/api/v1/sales` | yes | Create a sale |
-| `PATCH` | `/api/v1/sales/:id` | yes | Replace one of the caller's sales |
-| `DELETE` | `/api/v1/sales/:id` | yes | Delete one of the caller's sales |
+| `PATCH` | `/api/v1/sales/:id` | yes | Replace a sale the caller may edit |
+| `DELETE` | `/api/v1/sales/:id` | yes | Delete a sale the caller may edit |
 
-Send `Authorization: Bearer <token>` and `Content-Type: application/json`. Amounts in JSON are currency units (not cents). The server always recomputes totals. Every endpoint only touches sales created by the token's user; another user's sale id returns `404 Sale not found.`
+Send `Authorization: Bearer <token>` and `Content-Type: application/json`. Amounts in JSON are currency units (not cents). The server always recomputes totals. Each token can only read what the same visibility rules allow (own sales for personal accounts, the whole org ledger for members) and can only edit/delete sales it's allowed to edit (own sales, or any org sale for the org admin); anything else returns `404 Sale not found.`
 
 ### Create a sale
 
@@ -177,9 +193,11 @@ Response money fields: `subtotal`, `tax`, `total`, and each line’s `unitPrice`
 13. Log out → landing at `/`
 14. `/settings` uploads a profile picture → it appears in the top bar; a bad file type is rejected
 15. Set a display name → top bar shows it; change the password with the current password
-16. A second agent's account doesn't list, open, edit, or delete the first agent's sales (web and API)
-17. `GET /api/v1/health` → `{ ok: true }`
-18. Login via `/api/v1/auth/login`, create/list/update/delete a sale with the bearer token
+16. Create an org at `/signup` → admin lands on `/sales`; `/org` shows the org and lets the admin add a member
+17. A member added by the admin signs in → both admin and member see all org sales; a member editing another member's sale gets a read-only view; the admin can edit/delete any org sale
+18. Personal accounts still can't see each other's sales (web and API)
+19. `GET /api/v1/health` → `{ ok: true }`
+20. Login via `/api/v1/auth/login`, create/list/update/delete a sale with the bearer token
 
 ## Receipt scan
 

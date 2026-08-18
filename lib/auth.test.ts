@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   normalizeUsername,
   validateDisplayName,
+  validateOrgName,
   validatePassword,
   validateUsername,
 } from "./auth";
@@ -47,5 +48,19 @@ describe("validateDisplayName", () => {
 
   it("rejects names longer than 40 characters", () => {
     expect(validateDisplayName("x".repeat(41))).toMatch(/40 characters/);
+  });
+});
+
+describe("validateOrgName", () => {
+  it("accepts a simple org name", () => {
+    expect(validateOrgName("San Isidro Store")).toBeNull();
+  });
+
+  it("rejects a blank name", () => {
+    expect(validateOrgName("")).toMatch(/required/);
+  });
+
+  it("rejects symbols", () => {
+    expect(validateOrgName("Bayan@Store")).toMatch(/3–40/);
   });
 });

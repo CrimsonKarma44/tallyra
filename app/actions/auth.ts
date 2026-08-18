@@ -4,10 +4,12 @@ import { redirect } from "next/navigation";
 import {
   createUser,
   normalizeUsername,
+  validateOrgName,
   validatePassword,
   validateUsername,
   verifyCredentials,
 } from "@/lib/auth";
+import { createOrganizationWithAdmin } from "@/lib/org";
 import { getSession } from "@/lib/session";
 
 export type AuthState = { error?: string } | null;
@@ -49,6 +51,8 @@ export async function signupAction(prevState: AuthState, formData: FormData): Pr
   const username = normalizeUsername(String(formData.get("username") ?? ""));
   const password = String(formData.get("password") ?? "");
   const confirm = String(formData.get("confirm") ?? "");
+  const accountType = String(formData.get("accountType") ?? "solo");
+  const orgName = String(formData.get("orgName") ?? "").trim();
   const nextPath = String(formData.get("next") ?? "").trim();
 
   const usernameError = validateUsername(username);
@@ -61,6 +65,19 @@ export async function signupAction(prevState: AuthState, formData: FormData): Pr
   }
   if (password !== confirm) {
     return { error: "Passwords do not match." };
+  }
+
+  if (accountType === "create-org") {
+    const orgNameError = validateOrgName(orgName);
+    if (orgNameError) {
+      return { error: orgNameError };
+    }
+    const created = await createOrganizationWithAdmin(orgName, username, password);
+    if (!created.ok) {
+      return { error: created.error };
+    }
+    await establishSession({ id: created.data.userId, username }, nextPath);
+    return null;
   }
 
   const created = await createUser(username, password);

@@ -1,14 +1,54 @@
 import { describe, expect, it } from "vitest";
-import { parseSaleWrite, saleQueryWhere, serializeSale } from "./sales-service";
+import {
+  editScope,
+  parseSaleWrite,
+  saleQueryWhere,
+  saleScope,
+  serializeSale,
+  type UserContext,
+} from "./sales-service";
+
+const solo: UserContext = { id: "user-123", organizationId: null, isOrgAdmin: false };
+const member: UserContext = { id: "user-123", organizationId: "org-1", isOrgAdmin: false };
+const admin: UserContext = { id: "user-123", organizationId: "org-1", isOrgAdmin: true };
+
+describe("saleScope", () => {
+  it("scopes a solo user to their own sales", () => {
+    expect(saleScope(solo)).toEqual({ createdById: "user-123" });
+  });
+
+  it("scopes an organization member to the whole org ledger", () => {
+    expect(saleScope(member)).toEqual({ createdBy: { organizationId: "org-1" } });
+  });
+});
+
+describe("editScope", () => {
+  it("lets a solo user edit only their own sales", () => {
+    expect(editScope(solo)).toEqual({ createdById: "user-123" });
+  });
+
+  it("restricts a non-admin member to their own sales", () => {
+    expect(editScope(member)).toEqual({ createdById: "user-123" });
+  });
+
+  it("lets an admin edit any sale in the org", () => {
+    expect(editScope(admin)).toEqual({ createdBy: { organizationId: "org-1" } });
+  });
+});
 
 describe("saleQueryWhere", () => {
   it("scopes results to the signed-in user", () => {
-    const where = saleQueryWhere("user-123", {});
+    const where = saleQueryWhere(solo, {});
     expect(where.createdById).toBe("user-123");
   });
 
+  it("scopes results to the org ledger for a member", () => {
+    const where = saleQueryWhere(member, {});
+    expect(where.createdBy).toEqual({ organizationId: "org-1" });
+  });
+
   it("merges search and date filters on top of the owner scope", () => {
-    const where = saleQueryWhere("user-123", { q: "rice", from: "2026-08-01", to: "2026-08-31" });
+    const where = saleQueryWhere(solo, { q: "rice", from: "2026-08-01", to: "2026-08-31" });
     expect(where.createdById).toBe("user-123");
     expect(where.soldAt).toEqual({ gte: new Date("2026-08-01T00:00:00"), lte: new Date("2026-08-31T23:59:59.999") });
     expect(where.OR).toHaveLength(5);

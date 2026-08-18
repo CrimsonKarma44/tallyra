@@ -6,6 +6,8 @@ type HeaderUser = {
   username: string;
   displayName: string | null;
   avatarUpdatedAt: Date | null;
+  organizationId: string | null;
+  organizationName: string | null;
 };
 
 export function Header({ user }: { user?: HeaderUser | null }) {
@@ -38,6 +40,11 @@ export function Header({ user }: { user?: HeaderUser | null }) {
             )}
             <span>{label}</span>
           </Link>
+          {user.organizationName ? (
+            <Link className="org-badge" href="/org">
+              {user.organizationName}
+            </Link>
+          ) : null}
           <form action={logoutAction}>
             <button className="btn btn-ghost" type="submit">
               Log out

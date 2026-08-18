@@ -21,7 +21,10 @@
 - Public landing at `/` for guests; sales book at `/sales` after login
 - Seeded agent login, public signup at `/signup`, signed httpOnly session cookie
 - Sale CRUD with line items and server-computed totals
-- Sales are scoped to the signed-in agent; a user never lists, opens, edits, or deletes another user's sales (web UI and REST API)
+- Personal accounts only see/edit/delete their own sales
+- Organizations: created at sign-up, admin adds member accounts, members share the org ledger at `/sales` (Agent column restored)
+- Members view all org sales but edit/delete only their own; the org admin can edit/delete any org sale
+- Same visibility rules enforced in the REST API via per-token scoping
 - Record sale (`/sales/new`) vs scan receipt (`/sales/scan` overlay then filled form)
 - Optional receiver fields on each sale
 - User settings at `/settings`: profile picture upload/remove, display name, password change
@@ -47,7 +50,7 @@ When working on this project:
 
 ## Decisions (locked)
 - **Stack**: Next.js App Router, TypeScript, Prisma, SQLite
-- **Auth**: Seeded agent from `AUTH_USERNAME` / `AUTH_PASSWORD`; agents can also register at `/signup`; iron-session cookie
+- **Auth**: Seeded agent from `AUTH_USERNAME` / `AUTH_PASSWORD`; agents can also register at `/signup` (personal or create-org admin); iron-session cookie
 - **Persistence**: SQLite file (`DATABASE_URL=file:./dev.db` → `prisma/dev.db` locally, `/data/pos.db` in Docker)
 - **Money**: Integer cents; totals recomputed on the server
 - **Profile image**: Stored as a BLOB on the `User` row (no filesystem/volume); JPEG/PNG/WebP up to 2MB, served via `/api/me/avatar` for the signed-in session only
@@ -56,7 +59,8 @@ When working on this project:
 - **Receipt scan**: `/sales/scan` overlay, then review form; Gemini `gemini-3.7-flash`; photos not stored
 - **Receiver**: optional name/company, account, contact, address
 - **HTTP API**: `/api/v1` JSON + bearer tokens so other services can share the ledger
-- **Sales isolation**: every sale query (web + API) is scoped to the authenticated user via `createdById`; cross-user access returns 404 "Sale not found."
+- **Sales isolation**: solo users scope to `createdById`; org members scope to `createdBy.organizationId` (view), and edits use `editScope` (org admin → whole org, others → own sales); out-of-scope access returns 404 "Sale not found."
+- **Organizations**: single admin (`Organization.adminId`, unique) created at sign-up; members added only by the admin; no self-join, member removal, or org deletion in this pass
 
 ## Out of scope
 - Demo video
@@ -65,6 +69,7 @@ When working on this project:
 - Multi-role auth, OAuth, password reset
 - Payments, change due, refunds
 - Multi-store / offline sync
+- Org self-join, member removal, org rename/delete, multiple admins
 
 ## Next Immediate Steps
 - Record the optional 2–3 minute demo video if a course deliverable still requires it

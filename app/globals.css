@@ -101,6 +101,70 @@ a:hover {
   color: #fff;
 }
 
+.org-badge {
+  color: #c8c1b5;
+  border: 1px solid #4a5563;
+  border-radius: 999px;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.78rem;
+  text-decoration: none;
+}
+
+.org-badge:hover {
+  text-decoration: none;
+  color: #fff;
+  border-color: #7a7166;
+}
+
+.account-type {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.7rem 0.9rem;
+  margin: 0 0 0.5rem;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.account-type legend {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+  padding: 0 0.3rem;
+}
+
+.radio-row {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: var(--ink);
+}
+
+.radio-row input {
+  width: auto;
+  margin-top: 0.15rem;
+}
+
+.radio-row strong {
+  display: block;
+  margin-bottom: 0.1rem;
+}
+
+.org-name-field {
+  margin-top: 0.2rem;
+}
+
+.add-member {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 420px;
+}
+
+.org-members {
+  margin-top: 0.5rem;
+}
+
 .avatar {
   display: inline-block;
   width: 32px;
