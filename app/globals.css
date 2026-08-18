@@ -392,7 +392,10 @@ a:hover {
 .filters,
 .table-wrap,
 .sale-card,
-.empty {
+.empty,
+.chart-card,
+.top-items,
+.expenses-list {
   padding: 1rem;
 }
 
@@ -658,11 +661,55 @@ th.num {
   color: var(--danger);
 }
 
-.chart-card h2,
-.table-wrap h2 {
-  margin: 0 0 0.75rem;
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.9rem;
+}
+
+.card-head h2 {
+  margin: 0;
   font-size: 1.1rem;
-  padding: 0.25rem 0.25rem 0;
+}
+
+.chart-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 1rem;
+  align-items: start;
+}
+
+.chart-legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.9rem;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+}
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.legend-revenue {
+  background: var(--accent);
+}
+
+.legend-expense {
+  background: var(--danger);
 }
 
 .chart-svg {
@@ -696,33 +743,50 @@ th.num {
   stroke: var(--danger);
 }
 
-.chart-legend-label {
-  fill: var(--ink-soft);
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.chart-legend-line {
-  stroke-width: 2.5;
-}
-
 .empty-note {
   color: var(--muted);
   margin: 0.5rem 0;
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.empty-panel {
+  text-align: center;
+  padding: 2.5rem 1.5rem;
+}
+
+.empty-panel h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.3rem;
+}
+
+.empty-panel p {
+  margin: 0 0 1.25rem;
+  color: var(--muted);
+}
+
+.empty-panel .btn-row {
+  justify-content: center;
+  margin-top: 0;
 }
 
 .top-items ol {
   margin: 0;
   padding: 0;
   list-style: none;
-  display: grid;
-  gap: 0.5rem;
 }
 
 .top-items li {
   display: flex;
   align-items: baseline;
   gap: 0.75rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.top-items li:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
 }
 
 .top-rank {
@@ -757,6 +821,7 @@ th.num {
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 1.2rem;
+  align-self: start;
 }
 
 .expense-form h2 {
@@ -764,15 +829,31 @@ th.num {
   font-size: 1.1rem;
 }
 
-.summary-line {
-  margin: 0 0 0.75rem;
-  color: var(--muted);
-  font-size: 0.9rem;
+.expense-form .muted {
+  margin: 0 0 0.25rem;
+  font-size: 0.85rem;
 }
 
-.expenses-list h2 {
-  margin: 0 0 0.5rem;
-  font-size: 1.1rem;
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.total-chip {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.expenses-list {
+  align-self: start;
 }
 
 .actions-cell {
@@ -783,6 +864,18 @@ th.num {
 .btn-small {
   padding: 0.3rem 0.6rem;
   font-size: 0.8rem;
+}
+
+.btn-soft-danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+  border-color: transparent;
+}
+
+@media (max-width: 900px) {
+  .chart-row {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 800px) {

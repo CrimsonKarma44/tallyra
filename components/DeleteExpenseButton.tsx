@@ -13,7 +13,7 @@ export function DeleteExpenseButton({ id }: { id: string }) {
       }}
     >
       <input type="hidden" name="id" value={id} />
-      <button className="btn btn-small btn-danger" type="submit">
+      <button className="btn btn-small btn-soft-danger" type="submit">
         Delete
       </button>
     </form>

@@ -11,16 +11,19 @@ export function ExpenseForm() {
 
   return (
     <form action={formAction} className="expense-form">
-      <h2>Add expense</h2>
+      <h2>Record an expense</h2>
+      <p className="muted">Money going out, tracked against your sales.</p>
       {state?.error ? <p className="error">{state.error}</p> : null}
-      <label>
-        Date
-        <input name="spentAt" type="date" />
-      </label>
-      <label>
-        Amount
-        <input name="amount" type="number" inputMode="decimal" step="0.01" min="0" required placeholder="0.00" />
-      </label>
+      <div className="field-row">
+        <label>
+          Date
+          <input name="spentAt" type="date" />
+        </label>
+        <label>
+          Amount
+          <input name="amount" type="number" inputMode="decimal" step="0.01" min="0" required placeholder="0.00" />
+        </label>
+      </div>
       <label>
         Note
         <input name="note" maxLength={200} placeholder="e.g. restock rice, electricity, fare" />

@@ -32,13 +32,13 @@ export default async function ExpensesPage({
       <div className="expenses-layout">
         <ExpenseForm />
 
-        <section className="card table-wrap expenses-list">
-          <h2>
-            Expenses <span className="muted">({expenses.length})</span>
-          </h2>
-          <p className="summary-line">
-            Listed total: <strong>{formatCents(totalCents)}</strong>
-          </p>
+        <section className="card expenses-list">
+          <div className="card-head">
+            <h2>
+              Expenses <span className="muted">({expenses.length})</span>
+            </h2>
+            <span className="total-chip">{formatCents(totalCents)}</span>
+          </div>
           {expenses.length === 0 ? (
             <p className="empty-note">No expenses yet — record the first one.</p>
           ) : (

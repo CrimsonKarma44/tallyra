@@ -89,17 +89,6 @@ export function RevenueChart({ series }: { series: DayPoint[] }) {
           </text>
         ) : null,
       )}
-
-      <g className="chart-legend">
-        <text x={PAD_L} y={H - PAD_B + 4} className="chart-legend-label">
-          Revenue
-        </text>
-        <line className="chart-legend-line chart-line-revenue" x1={PAD_L + 60} y1={H - PAD_B - 2} x2={PAD_L + 92} y2={H - PAD_B - 2} />
-        <text x={PAD_L + 100} y={H - PAD_B + 4} className="chart-legend-label">
-          Expenses
-        </text>
-        <line className="chart-legend-line chart-line-expense" x1={PAD_L + 160} y1={H - PAD_B - 2} x2={PAD_L + 192} y2={H - PAD_B - 2} />
-      </g>
     </svg>
   );
 }

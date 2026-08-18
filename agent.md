@@ -30,7 +30,7 @@
 - User settings at `/settings`: profile picture upload/remove, display name, password change
 - Top bar shows the signed-in agent's profile picture and display name (initials fallback)
 - Expenses at `/expenses`: record money going out (date, amount, note); same visibility rules as sales (own for solo, shared org ledger for members)
-- Sales dashboard analytics: stat cards (revenue, expenses, net, count, average, tax, items sold), a server-rendered SVG revenue-vs-expenses line chart, per-agent breakdown for orgs (incoming/outgoing/net), and top items; honors the date filter and visibility scope
+- Sales dashboard analytics: stat cards (revenue, expenses, net, count, average, items sold), a server-rendered SVG revenue-vs-expenses line chart with a side-by-side top-items panel, per-agent breakdown for orgs (incoming/outgoing/net), and top items; honors the date filter and visibility scope
 - Profile images stored as BLOBs on the `User` row; served via `/api/me/avatar` (session cookie)
 - Public REST API at `/api/v1` (bearer token) for other ledger clients
 - Local run (`npm run db:setup && npm run dev`) and Docker Compose path

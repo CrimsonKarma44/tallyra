@@ -41,7 +41,7 @@ npm run db:setup
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Logged-out visitors see a welcome page. After sign-in, the sales book is at `/sales`.
+Open [http://localhost:3000](http://localhost:3000). Logged-out visitors see a welcome page. After sign-in, the Sales dashboard is at `/sales`.
 
 Default seeded login (change these in `.env`), or create a new account at `/signup`:
 
@@ -111,7 +111,7 @@ Money is stored as integer cents. The server always recomputes totals on create/
 
 The sales dashboard (`/sales`) computes analytics from the ledger in the caller's visibility scope (own data for personal accounts, the whole org for members) and the current date filter:
 
-- **Stat cards**: Revenue, Expenses, Net, Sales count, Average per sale, Tax collected, Items sold
+- **Stat cards**: Revenue, Expenses, Net, Sales count, Average per sale, Items sold
 - **Revenue vs expenses** line chart (last 30 days by default, or the chosen date range)
 - **By agent** (organizations only): incoming (sales), outgoing (expenses), and net for each member
 - **Top items**: the five best-selling items by quantity
