@@ -13,7 +13,10 @@ import { getSession } from "@/lib/session";
 export type AuthState = { error?: string } | null;
 
 function safeNextPath(raw: string): string {
-  return raw.startsWith("/") && !raw.startsWith("//") ? raw : "/";
+  if (raw.startsWith("/") && !raw.startsWith("//") && raw !== "/") {
+    return raw;
+  }
+  return "/sales";
 }
 
 async function establishSession(user: { id: string; username: string }, nextPath: string) {
@@ -72,5 +75,5 @@ export async function signupAction(prevState: AuthState, formData: FormData): Pr
 export async function logoutAction() {
   const session = await getSession();
   session.destroy();
-  redirect("/login");
+  redirect("/");
 }

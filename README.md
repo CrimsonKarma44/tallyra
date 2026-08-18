@@ -34,7 +34,7 @@ npm run db:setup
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000). Logged-out visitors see a welcome page. After sign-in, the sales book is at `/sales`.
 
 Default seeded login (change these in `.env`), or create a new account at `/signup`:
 
@@ -152,20 +152,21 @@ Response money fields: `subtotal`, `tax`, `total`, and each line’s `unitPrice`
 
 ## Verification checklist
 
-1. Visit `/` while logged out → redirected to `/login`
-2. Wrong password → error, stay on login
-3. Create an account at `/signup` → signed in as the new agent
-4. Duplicate username or mismatched passwords → error, stay on signup
-5. Default credentials → sales list (seeded sample sales)
-6. Record a two-line sale → list shows computed total
-7. Edit quantity → stored total updates
-8. Delete sale → gone from the list
-9. Scan receipt (`/sales/scan`) opens an overlay; after a successful read the form is filled
-10. Save a sale with or without receiver fields
-11. Scan without a key → overlay error; Record sale still works
-12. Log out → `/` requires login again
-13. `GET /api/v1/health` → `{ ok: true }`
-14. Login via `/api/v1/auth/login`, create/list/update/delete a sale with the bearer token
+1. Visit `/` while logged out → welcome landing (Sign in / Create account)
+2. Visit `/sales` while logged out → redirected to `/login`
+3. Wrong password → error, stay on login
+4. Create an account at `/signup` → signed in as the new agent
+5. Duplicate username or mismatched passwords → error, stay on signup
+6. Default credentials → sales list at `/sales`
+7. Record a two-line sale → list shows computed total
+8. Edit quantity → stored total updates
+9. Delete sale → gone from the list
+10. Scan receipt (`/sales/scan`) opens an overlay; after a successful read the form is filled
+11. Save a sale with or without receiver fields
+12. Scan without a key → overlay error; Record sale still works
+13. Log out → landing at `/`
+14. `GET /api/v1/health` → `{ ok: true }`
+15. Login via `/api/v1/auth/login`, create/list/update/delete a sale with the bearer token
 
 ## Receipt scan
 

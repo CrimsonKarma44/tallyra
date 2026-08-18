@@ -243,7 +243,7 @@ export function SaleForm({ action, initial, submitLabel }: Props) {
         <button className="btn" type="submit" disabled={pending}>
           {pending ? "Saving…" : submitLabel}
         </button>
-        <Link className="btn btn-secondary" href="/">
+        <Link className="btn btn-secondary" href="/sales">
           Cancel
         </Link>
       </div>

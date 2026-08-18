@@ -18,6 +18,7 @@
 
 ## Current Project Status
 - Next.js 15 + TypeScript + Prisma + SQLite app implemented
+- Public landing at `/` for guests; sales book at `/sales` after login
 - Seeded agent login, public signup at `/signup`, signed httpOnly session cookie
 - Sale CRUD with line items and server-computed totals
 - Record sale (`/sales/new`) vs scan receipt (`/sales/scan` overlay then filled form)

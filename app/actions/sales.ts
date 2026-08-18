@@ -119,8 +119,8 @@ export async function createSale(
     }
     return { error: "Could not save the sale." };
   }
-  revalidatePath("/");
-  redirect("/");
+  revalidatePath("/sales");
+  redirect("/sales");
 }
 
 export async function updateSale(
@@ -173,7 +173,7 @@ export async function updateSale(
     }
     return { error: "Could not update the sale." };
   }
-  revalidatePath("/");
+  revalidatePath("/sales");
   revalidatePath(`/sales/${id}`);
   redirect(`/sales/${id}`);
 }
@@ -185,8 +185,8 @@ export async function deleteSale(formData: FormData) {
     return;
   }
   await prisma.transaction.delete({ where: { id } }).catch(() => undefined);
-  revalidatePath("/");
-  redirect("/");
+  revalidatePath("/sales");
+  redirect("/sales");
 }
 
 export async function listSales(params: { q?: string; from?: string; to?: string }) {

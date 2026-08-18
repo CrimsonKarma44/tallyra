@@ -6,21 +6,23 @@ export async function middleware(request: NextRequest) {
   const response = NextResponse.next();
   const session = await getIronSession<SessionData>(request, response, getSessionOptions());
   const { pathname } = request.nextUrl;
+
   if (pathname.startsWith("/api/")) {
     return NextResponse.next();
   }
-  const isPublicAuth = pathname === "/login" || pathname === "/signup";
 
-  if (!session.userId && !isPublicAuth) {
+  const isLanding = pathname === "/";
+  const isPublicAuth = pathname === "/login" || pathname === "/signup";
+  const isPublic = isLanding || isPublicAuth;
+
+  if (!session.userId && !isPublic) {
     const login = new URL("/login", request.url);
-    if (pathname !== "/") {
-      login.searchParams.set("next", pathname);
-    }
+    login.searchParams.set("next", pathname);
     return NextResponse.redirect(login);
   }
 
-  if (session.userId && isPublicAuth) {
-    return NextResponse.redirect(new URL("/", request.url));
+  if (session.userId && (isLanding || isPublicAuth)) {
+    return NextResponse.redirect(new URL("/sales", request.url));
   }
 
   return response;

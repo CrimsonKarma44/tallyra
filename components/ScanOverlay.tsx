@@ -57,7 +57,7 @@ export function ScanOverlay({ onScanned }: Props) {
             <button className="btn" type="submit" disabled={pending}>
               {pending ? "Reading…" : "Read receipt"}
             </button>
-            <Link className="btn btn-secondary" href="/">
+            <Link className="btn btn-secondary" href="/sales">
               Cancel
             </Link>
           </div>
