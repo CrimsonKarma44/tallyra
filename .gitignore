@@ -1,0 +1,16 @@
+node_modules
+.next
+out
+dist
+*.tsbuildinfo
+.env
+.env*.local
+prisma/dev.db
+prisma/dev.db-journal
+prisma/**/*.db
+prisma/**/*.db-journal
+/data
+coverage
+.DS_Store
+npm-debug.log*
+.vercel
