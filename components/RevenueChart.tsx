@@ -73,8 +73,8 @@ export function RevenueChart({ series }: { series: DayPoint[] }) {
         );
       })}
 
-      <polyline className="chart-line chart-line-expense" points={path((p) => p.expenseCents)} />
-      <polyline className="chart-line chart-line-revenue" points={path((p) => p.revenueCents)} />
+      <path className="chart-line chart-line-expense" d={path((p) => p.expenseCents)} />
+      <path className="chart-line chart-line-revenue" d={path((p) => p.revenueCents)} />
 
       {series.map((point, index) =>
         index % xLabelStep === 0 ? (
