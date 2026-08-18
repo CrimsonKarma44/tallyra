@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { pesosToCents } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
+import { saleQueryWhere } from "@/lib/sales-service";
 import { requireUser } from "@/lib/session";
 import { computeTotals, SaleValidationError, type LineInput } from "@/lib/totals";
 
@@ -127,13 +128,15 @@ export async function updateSale(
   prevState: SaleActionState,
   formData: FormData,
 ): Promise<SaleActionState> {
-  await requireUser();
+  const user = await requireUser();
   const id = String(formData.get("id") ?? "");
   if (!id) {
     return { error: "Missing sale id." };
   }
   try {
-    const existing = await prisma.transaction.findUnique({ where: { id } });
+    const existing = await prisma.transaction.findUnique({
+      where: { id, createdById: user.userId },
+    });
     if (!existing) {
       return { error: "Sale not found." };
     }
@@ -179,54 +182,21 @@ export async function updateSale(
 }
 
 export async function deleteSale(formData: FormData) {
-  await requireUser();
+  const user = await requireUser();
   const id = String(formData.get("id") ?? "");
   if (!id) {
     return;
   }
-  await prisma.transaction.delete({ where: { id } }).catch(() => undefined);
+  await prisma.transaction.deleteMany({ where: { id, createdById: user.userId } });
   revalidatePath("/sales");
   redirect("/sales");
 }
 
 export async function listSales(params: { q?: string; from?: string; to?: string }) {
-  await requireUser();
-  const where: {
-    soldAt?: { gte?: Date; lte?: Date };
-    OR?: Array<
-      | { note: { contains: string } }
-      | { createdBy: { username: { contains: string } } }
-      | { receiverName: { contains: string } }
-      | { receiverAccount: { contains: string } }
-      | { lines: { some: { name: { contains: string } } } }
-    >;
-  } = {};
-
-  if (params.from || params.to) {
-    where.soldAt = {};
-    if (params.from) {
-      where.soldAt.gte = new Date(`${params.from}T00:00:00`);
-    }
-    if (params.to) {
-      where.soldAt.lte = new Date(`${params.to}T23:59:59.999`);
-    }
-  }
-
-  const q = params.q?.trim();
-  if (q) {
-    where.OR = [
-      { note: { contains: q } },
-      { createdBy: { username: { contains: q } } },
-      { receiverName: { contains: q } },
-      { receiverAccount: { contains: q } },
-      { lines: { some: { name: { contains: q } } } },
-    ];
-  }
-
+  const user = await requireUser();
   return prisma.transaction.findMany({
-    where,
+    where: saleQueryWhere(user.userId, params),
     include: {
-      createdBy: { select: { username: true } },
       lines: { select: { id: true } },
     },
     orderBy: { soldAt: "desc" },
@@ -234,9 +204,9 @@ export async function listSales(params: { q?: string; from?: string; to?: string
 }
 
 export async function getSale(id: string) {
-  await requireUser();
+  const user = await requireUser();
   return prisma.transaction.findUnique({
-    where: { id },
+    where: { id, createdById: user.userId },
     include: {
       createdBy: { select: { username: true } },
       lines: { orderBy: { sortOrder: "asc" } },

@@ -12,7 +12,7 @@ export async function GET(request: Request) {
     return auth.error;
   }
   const { searchParams } = new URL(request.url);
-  const sales = await listSalesRecords({
+  const sales = await listSalesRecords(auth.user.userId, {
     q: searchParams.get("q") ?? undefined,
     from: searchParams.get("from") ?? undefined,
     to: searchParams.get("to") ?? undefined,

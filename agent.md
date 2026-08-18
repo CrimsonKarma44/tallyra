@@ -21,6 +21,7 @@
 - Public landing at `/` for guests; sales book at `/sales` after login
 - Seeded agent login, public signup at `/signup`, signed httpOnly session cookie
 - Sale CRUD with line items and server-computed totals
+- Sales are scoped to the signed-in agent; a user never lists, opens, edits, or deletes another user's sales (web UI and REST API)
 - Record sale (`/sales/new`) vs scan receipt (`/sales/scan` overlay then filled form)
 - Optional receiver fields on each sale
 - User settings at `/settings`: profile picture upload/remove, display name, password change
@@ -55,6 +56,7 @@ When working on this project:
 - **Receipt scan**: `/sales/scan` overlay, then review form; Gemini `gemini-3.7-flash`; photos not stored
 - **Receiver**: optional name/company, account, contact, address
 - **HTTP API**: `/api/v1` JSON + bearer tokens so other services can share the ledger
+- **Sales isolation**: every sale query (web + API) is scoped to the authenticated user via `createdById`; cross-user access returns 404 "Sale not found."
 
 ## Out of scope
 - Demo video

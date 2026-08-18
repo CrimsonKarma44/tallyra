@@ -165,17 +165,24 @@ export function saleListWhere(params: { q?: string; from?: string; to?: string }
   return where;
 }
 
-export async function listSalesRecords(params: { q?: string; from?: string; to?: string }) {
+export function saleQueryWhere(
+  userId: string,
+  params: { q?: string; from?: string; to?: string },
+) {
+  return { createdById: userId, ...saleListWhere(params) };
+}
+
+export async function listSalesRecords(userId: string, params: { q?: string; from?: string; to?: string }) {
   return prisma.transaction.findMany({
-    where: saleListWhere(params),
+    where: saleQueryWhere(userId, params),
     include: saleInclude,
     orderBy: { soldAt: "desc" },
   });
 }
 
-export async function getSaleRecord(id: string) {
+export async function getSaleRecord(id: string, userId: string) {
   return prisma.transaction.findUnique({
-    where: { id },
+    where: { id, createdById: userId },
     include: saleInclude,
   });
 }
@@ -209,8 +216,8 @@ export async function createSaleRecord(userId: string, input: unknown) {
   });
 }
 
-export async function updateSaleRecord(id: string, input: unknown) {
-  const existing = await prisma.transaction.findUnique({ where: { id } });
+export async function updateSaleRecord(id: string, userId: string, input: unknown) {
+  const existing = await prisma.transaction.findUnique({ where: { id, createdById: userId } });
   if (!existing) {
     return null;
   }
@@ -243,10 +250,10 @@ export async function updateSaleRecord(id: string, input: unknown) {
   });
 }
 
-export async function deleteSaleRecord(id: string) {
+export async function deleteSaleRecord(id: string, userId: string) {
   try {
-    await prisma.transaction.delete({ where: { id } });
-    return true;
+    const result = await prisma.transaction.deleteMany({ where: { id, createdById: userId } });
+    return result.count > 0;
   } catch {
     return false;
   }

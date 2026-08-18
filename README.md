@@ -8,6 +8,7 @@ This is the SD-01 capstone MVP: **CRUD**, **totals**, **simple auth**, **HTTP AP
 
 - Sign in with a seeded agent account, or create a new agent account
 - Create, list, view, edit, and delete sales
+- Sales are scoped to the signed-in agent — no one sees or edits another user's records
 - Multiple line items per sale (name, quantity, unit price)
 - Server-side totals in integer cents
 - Search by item, note, or agent; filter by date
@@ -116,13 +117,13 @@ Other services authenticate with a bearer token from login (or signup). Tokens a
 | `POST` | `/api/v1/auth/login` | no | `{ username, password }` → `{ token, userId, username }` |
 | `POST` | `/api/v1/auth/signup` | no | Create an agent and return a token |
 | `GET` | `/api/v1/me` | yes | Current token user |
-| `GET` | `/api/v1/sales` | yes | List sales (`q`, `from`, `to` query params) |
-| `GET` | `/api/v1/sales/:id` | yes | One sale |
+| `GET` | `/api/v1/sales` | yes | List the **caller's** sales (`q`, `from`, `to` query params) |
+| `GET` | `/api/v1/sales/:id` | yes | One of the caller's sales |
 | `POST` | `/api/v1/sales` | yes | Create a sale |
-| `PATCH` | `/api/v1/sales/:id` | yes | Replace a sale |
-| `DELETE` | `/api/v1/sales/:id` | yes | Delete a sale |
+| `PATCH` | `/api/v1/sales/:id` | yes | Replace one of the caller's sales |
+| `DELETE` | `/api/v1/sales/:id` | yes | Delete one of the caller's sales |
 
-Send `Authorization: Bearer <token>` and `Content-Type: application/json`. Amounts in JSON are currency units (not cents). The server always recomputes totals.
+Send `Authorization: Bearer <token>` and `Content-Type: application/json`. Amounts in JSON are currency units (not cents). The server always recomputes totals. Every endpoint only touches sales created by the token's user; another user's sale id returns `404 Sale not found.`
 
 ### Create a sale
 
@@ -176,8 +177,9 @@ Response money fields: `subtotal`, `tax`, `total`, and each line’s `unitPrice`
 13. Log out → landing at `/`
 14. `/settings` uploads a profile picture → it appears in the top bar; a bad file type is rejected
 15. Set a display name → top bar shows it; change the password with the current password
-16. `GET /api/v1/health` → `{ ok: true }`
-17. Login via `/api/v1/auth/login`, create/list/update/delete a sale with the bearer token
+16. A second agent's account doesn't list, open, edit, or delete the first agent's sales (web and API)
+17. `GET /api/v1/health` → `{ ok: true }`
+18. Login via `/api/v1/auth/login`, create/list/update/delete a sale with the bearer token
 
 ## Receipt scan
 

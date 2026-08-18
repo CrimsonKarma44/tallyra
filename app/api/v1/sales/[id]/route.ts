@@ -12,7 +12,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     return auth.error;
   }
   const { id } = await params;
-  const sale = await getSaleRecord(id);
+  const sale = await getSaleRecord(id, auth.user.userId);
   if (!sale) {
     return json({ error: "Sale not found." }, 404);
   }
@@ -26,7 +26,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
   const { id } = await params;
   try {
-    const sale = await updateSaleRecord(id, await readJson(request));
+    const sale = await updateSaleRecord(id, auth.user.userId, await readJson(request));
     if (!sale) {
       return json({ error: "Sale not found." }, 404);
     }
@@ -45,7 +45,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     return auth.error;
   }
   const { id } = await params;
-  const deleted = await deleteSaleRecord(id);
+  const deleted = await deleteSaleRecord(id, auth.user.userId);
   if (!deleted) {
     return json({ error: "Sale not found." }, 404);
   }

@@ -1,5 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { parseSaleWrite, serializeSale } from "./sales-service";
+import { parseSaleWrite, saleQueryWhere, serializeSale } from "./sales-service";
+
+describe("saleQueryWhere", () => {
+  it("scopes results to the signed-in user", () => {
+    const where = saleQueryWhere("user-123", {});
+    expect(where.createdById).toBe("user-123");
+  });
+
+  it("merges search and date filters on top of the owner scope", () => {
+    const where = saleQueryWhere("user-123", { q: "rice", from: "2026-08-01", to: "2026-08-31" });
+    expect(where.createdById).toBe("user-123");
+    expect(where.soldAt).toEqual({ gte: new Date("2026-08-01T00:00:00"), lte: new Date("2026-08-31T23:59:59.999") });
+    expect(where.OR).toHaveLength(5);
+  });
+});
 
 describe("parseSaleWrite", () => {
   it("computes totals from decimal unit prices", () => {
