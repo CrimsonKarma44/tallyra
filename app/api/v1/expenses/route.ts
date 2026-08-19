@@ -1,10 +1,10 @@
-import { json, options, readJson, requireApiLedgerUser } from "@/lib/api-http";
 import {
   ExpenseValidationError,
   createExpenseRecord,
   listExpensesRecords,
   serializeExpense,
 } from "@/lib/expenses";
+import { json, options, readJson, requireApiLedgerUser, resolveLedgerScope } from "@/lib/api-http";
 
 export function OPTIONS() {
   return options();
@@ -16,10 +16,18 @@ export async function GET(request: Request) {
     return auth.error;
   }
   const { searchParams } = new URL(request.url);
-  const expenses = await listExpensesRecords(auth.user.userId, {
-    from: searchParams.get("from") ?? undefined,
-    to: searchParams.get("to") ?? undefined,
-  });
+  const scope = await resolveLedgerScope(auth.user.userId, searchParams.get("ledger"));
+  if (scope.error) {
+    return scope.error;
+  }
+  const expenses = await listExpensesRecords(
+    auth.user.userId,
+    {
+      from: searchParams.get("from") ?? undefined,
+      to: searchParams.get("to") ?? undefined,
+    },
+    scope.opts,
+  );
   return json({ expenses: expenses.map(serializeExpense) });
 }
 

@@ -61,3 +61,62 @@ export async function readJson(request: Request): Promise<unknown> {
     return null;
   }
 }
+
+export type LedgerDecisionUser = {
+  id: string;
+  organizationId: string | null;
+  organizationAdminId?: string | null;
+};
+
+/**
+ * Pure decision for the ?ledger= query param on ledger read endpoints.
+ * Returns the LedgerContextOptions to pass to the service layer, or an error
+ * string for invalid or disallowed combinations.
+ */
+export function ledgerParamDecision(
+  param: string | null,
+  user: LedgerDecisionUser,
+): { opts: { activeOrgId?: string | null }; error?: string } {
+  if (!param) {
+    return { opts: {} };
+  }
+  if (param === "org") {
+    if (!user.organizationId) {
+      return { opts: {}, error: "This account has no organization." };
+    }
+    return { opts: { activeOrgId: user.organizationId } };
+  }
+  if (param === "personal") {
+    const isAdmin = Boolean(user.organizationId && user.organizationAdminId === user.id);
+    if (user.organizationId && !isAdmin) {
+      return { opts: {}, error: "Only the organization admin has a personal ledger." };
+    }
+    return { opts: { activeOrgId: null } };
+  }
+  return { opts: {}, error: "Invalid ledger value. Use 'org' or 'personal'." };
+}
+
+/**
+ * Resolves the ?ledger= query param against the caller's account, returning
+ * LedgerContextOptions for the service layer or a 400 response on error.
+ */
+export async function resolveLedgerScope(userId: string, param: string | null) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      organizationId: true,
+      organization: { select: { adminId: true } },
+    },
+  });
+  const record: LedgerDecisionUser = {
+    id: userId,
+    organizationId: user?.organizationId ?? null,
+    organizationAdminId: user?.organization?.adminId ?? null,
+  };
+  const decision = ledgerParamDecision(param, record);
+  if (decision.error) {
+    return { error: json({ error: decision.error }, 400) };
+  }
+  return { opts: decision.opts };
+}

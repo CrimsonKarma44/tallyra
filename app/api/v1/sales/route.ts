@@ -1,4 +1,4 @@
-import { json, options, readJson, requireApiLedgerUser } from "@/lib/api-http";
+import { json, options, readJson, requireApiLedgerUser, resolveLedgerScope } from "@/lib/api-http";
 import { createSaleRecord, listSalesRecords, serializeSale } from "@/lib/sales-service";
 import { SaleValidationError } from "@/lib/totals";
 
@@ -12,11 +12,19 @@ export async function GET(request: Request) {
     return auth.error;
   }
   const { searchParams } = new URL(request.url);
-  const sales = await listSalesRecords(auth.user.userId, {
-    q: searchParams.get("q") ?? undefined,
-    from: searchParams.get("from") ?? undefined,
-    to: searchParams.get("to") ?? undefined,
-  });
+  const scope = await resolveLedgerScope(auth.user.userId, searchParams.get("ledger"));
+  if (scope.error) {
+    return scope.error;
+  }
+  const sales = await listSalesRecords(
+    auth.user.userId,
+    {
+      q: searchParams.get("q") ?? undefined,
+      from: searchParams.get("from") ?? undefined,
+      to: searchParams.get("to") ?? undefined,
+    },
+    scope.opts,
+  );
   return json({ sales: sales.map(serializeSale) });
 }
 

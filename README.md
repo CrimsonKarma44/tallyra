@@ -189,19 +189,34 @@ Other services authenticate with a bearer token from login (or signup). Tokens a
 | `GET` | `/api/v1/health` | no | Liveness |
 | `POST` | `/api/v1/auth/login` | no | `{ username, password }` → `{ token, userId, username }` |
 | `POST` | `/api/v1/auth/signup` | no | Create an agent and return a token (`email` is required) |
-| `GET` | `/api/v1/me` | yes | Current token user |
-| `GET` | `/api/v1/sales` | yes | List the sales visible to the caller (`q`, `from`, `to` query params) |
+| `GET` | `/api/v1/me` | yes | Current token user: `userId`, `username`, `organizationId`, `organizationName`, `isOrgAdmin`, `hasPersonalLedger` |
+| `GET` | `/api/v1/sales` | yes | List the sales visible to the caller (`q`, `from`, `to`, `ledger` query params) |
 | `GET` | `/api/v1/sales/:id` | yes | One sale visible to the caller |
 | `POST` | `/api/v1/sales` | yes | Create a sale |
 | `PATCH` | `/api/v1/sales/:id` | yes | Replace a sale the caller may edit |
 | `DELETE` | `/api/v1/sales/:id` | yes | Delete a sale the caller may edit |
-| `GET` | `/api/v1/expenses` | yes | List the expenses visible to the caller (`from`, `to` query params) |
+| `GET` | `/api/v1/expenses` | yes | List the expenses visible to the caller (`from`, `to`, `ledger` query params) |
 | `GET` | `/api/v1/expenses/:id` | yes | One expense visible to the caller |
 | `POST` | `/api/v1/expenses` | yes | Create an expense |
 | `PATCH` | `/api/v1/expenses/:id` | yes | Replace an expense the caller may edit |
 | `DELETE` | `/api/v1/expenses/:id` | yes | Delete an expense the caller may edit |
 
 Send `Authorization: Bearer <token>` and `Content-Type: application/json`. Amounts in JSON are currency units (not cents). The server always recomputes totals. Each token can only read what the same visibility rules allow (own sales for personal accounts, the whole org ledger for members) and can only edit/delete sales it's allowed to edit (own sales, or any org sale for the org admin); anything else returns `404 Sale not found.` Organization tokens whose email is unverified get `403 Email not verified.` on all ledger endpoints. The same rules apply to expenses (`404 Expense not found.`).
+
+### Choosing a ledger
+
+The `?ledger=` param on `GET /api/v1/sales` and `GET /api/v1/expenses` picks which ledger to read. Without it, org accounts read the org ledger and solo accounts read their personal ledger:
+
+- `ledger=org` — the organization ledger. Only valid for accounts that belong to an org (`400 This account has no organization.` otherwise).
+- `ledger=personal` — the caller's personal book. Solo accounts always have one; among org accounts only the **admin** does (`400 Only the organization admin has a personal ledger.` otherwise).
+- Any other value → `400 Invalid ledger value. Use 'org' or 'personal'.`
+
+```bash
+curl -sS "http://localhost:3000/api/v1/sales?ledger=personal" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+`GET /api/v1/me` reports which ledgers the token can read: solo accounts have `organizationId: null` and `hasPersonalLedger: true`; org admins have the org plus `isOrgAdmin: true` and `hasPersonalLedger: true`; non-admin members have the org and `hasPersonalLedger: false`.
 
 ### Create a sale
 
