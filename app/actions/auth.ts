@@ -66,9 +66,9 @@ export async function loginAction(prevState: AuthState, formData: FormData): Pro
   if (user.organizationId && isMailConfigured()) {
     const org = await prisma.organization.findUnique({
       where: { id: user.organizationId },
-      select: { email: true, name: true },
+      select: { email: true, emailVerifiedAt: true, name: true },
     });
-    if (org?.email) {
+    if (org?.email && org.emailVerifiedAt) {
       const mail = memberLoginAlertEmail({
         orgName: org.name,
         username: user.username,
@@ -222,9 +222,21 @@ export async function verifyEmailAction(prevState: OtpState, formData: FormData)
   if (!consumed.ok) {
     return { error: consumed.error };
   }
-  await prisma.user.update({
-    where: { id: user.userId },
-    data: { emailVerifiedAt: new Date() },
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: user.userId },
+      data: { emailVerifiedAt: new Date() },
+    });
+    const record = await tx.user.findUnique({
+      where: { id: user.userId },
+      select: { email: true },
+    });
+    if (record?.email) {
+      await tx.organization.updateMany({
+        where: { adminId: user.userId, email: record.email },
+        data: { emailVerifiedAt: new Date() },
+      });
+    }
   });
   redirect("/sales");
 }

@@ -1,12 +1,17 @@
 import Image from "next/image";
+import Link from "next/link";
 import {
   changePasswordAction,
 } from "@/app/actions/settings";
 import { AvatarForm } from "@/components/AvatarForm";
+import { CreateOrgForm } from "@/components/CreateOrgForm";
 import { DeleteAccountForm } from "@/components/DeleteAccountForm";
+import { JoinOrgButton } from "@/components/JoinOrgButton";
+import { OrgEmailVerifyForm } from "@/components/OrgEmailVerifyForm";
 import { PasswordForm } from "@/components/PasswordForm";
 import { ProfileForm } from "@/components/ProfileForm";
 import { TransferAdminForm } from "@/components/TransferAdminForm";
+import { getUserOrganizations } from "@/lib/org";
 import { requireUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 
@@ -16,6 +21,7 @@ export default async function SettingsPage() {
     where: { id: user.userId },
     select: {
       username: true,
+      email: true,
       displayName: true,
       avatarUpdatedAt: true,
     },
@@ -37,6 +43,9 @@ export default async function SettingsPage() {
   const avatarVersion = record?.avatarUpdatedAt?.getTime();
   const displayName = record?.displayName ?? "";
   const initial = (record?.displayName?.trim() || record?.username || "").charAt(0).toUpperCase();
+
+  const userEmail = record?.email ?? null;
+  const organizations = await getUserOrganizations(user.userId, userEmail, user.organizationId);
 
   return (
     <main className="main settings-page">
@@ -80,6 +89,60 @@ export default async function SettingsPage() {
           <h2>Change password</h2>
           <PasswordForm action={changePasswordAction} />
         </section>
+
+        {!user.organizationId ? (
+          <>
+            <hr className="settings-divider" />
+            <section className="settings-section">
+              <h2>Create an organization</h2>
+              <p className="muted">
+                Turn your personal ledger into a shared team ledger. You stay on your
+                personal ledger until you join the new organization.
+              </p>
+              <CreateOrgForm userEmail={userEmail} />
+            </section>
+          </>
+        ) : null}
+
+        {organizations.length > 0 ? (
+          <>
+            <hr className="settings-divider" />
+            <section className="settings-section">
+              <h2>Your organizations</h2>
+              <div className="org-list">
+                {organizations.map((org) => (
+                  <div className="org-item" key={org.id}>
+                    <div className="org-item-main">
+                      <strong>{org.name}</strong>
+                      <span className="muted">{org.email ?? "No email on file"}</span>
+                      <span
+                        className={org.emailVerifiedAt ? "org-status" : "org-status org-status-pending"}
+                      >
+                        {org.emailVerifiedAt ? "Email verified" : "Email not verified"}
+                      </span>
+                      <span className="muted">
+                        {org.memberCount} {org.memberCount === 1 ? "member" : "members"}
+                      </span>
+                    </div>
+                    <div className="org-item-actions">
+                      {org.isAdmin && !org.isMember ? (
+                        <>
+                          {!org.emailVerifiedAt ? <OrgEmailVerifyForm /> : null}
+                          <JoinOrgButton orgId={org.id} />
+                        </>
+                      ) : null}
+                      {org.isMember ? (
+                        <Link className="btn btn-small" href="/org">
+                          {org.isAdmin ? "Manage organization" : "Go to organization"}
+                        </Link>
+                      ) : null}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </>
+        ) : null}
 
         {user.organizationId && user.isOrgAdmin && hasOtherMembers ? (
           <>

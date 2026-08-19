@@ -29,13 +29,14 @@ model User {
 }
 
 model Organization {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  email     String?  @unique
-  adminId   String   @unique
-  admin     User     @relation("OrgAdmin", fields: [adminId], references: [id])
-  members   User[]   @relation("OrgMember")
-  createdAt DateTime @default(now())
+  id              String   @id @default(cuid())
+  name            String   @unique
+  email           String?  @unique
+  emailVerifiedAt DateTime?
+  adminId         String   @unique
+  admin           User     @relation("OrgAdmin", fields: [adminId], references: [id])
+  members         User[]   @relation("OrgMember")
+  createdAt       DateTime @default(now())
 }
 
 model Transaction {

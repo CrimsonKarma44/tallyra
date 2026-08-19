@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import {
+  deleteOrgOnly,
   deleteOrgWithAdmin,
   deletePersonalAccount,
   removeOrgMember,
@@ -42,6 +43,16 @@ export async function deleteAccountAction(
   }
 
   if (!user.organizationId) {
+    const adminOrg = await prisma.organization.findUnique({
+      where: { adminId: user.userId },
+      select: { id: true, _count: { select: { members: true } } },
+    });
+    if (adminOrg) {
+      if (adminOrg._count.members > 0) {
+        return { error: "Remove the organization's members before deleting this account." };
+      }
+      await deleteOrgOnly(adminOrg.id);
+    }
     await deletePersonalAccount(user.userId);
   } else if (!user.isOrgAdmin) {
     const org = await prisma.organization.findUnique({
@@ -75,6 +86,15 @@ export async function transferAdminAction(
 ): Promise<AccountActionState> {
   const user = await requireUser();
   if (!user.organizationId || !user.isOrgAdmin) {
+    if (!user.organizationId) {
+      const owns = await prisma.organization.findUnique({
+        where: { adminId: user.userId },
+        select: { id: true },
+      });
+      if (owns) {
+        return { error: "Join the organization before transferring admin." };
+      }
+    }
     return { error: "Only an organization admin can transfer admin." };
   }
   const successorId = String(formData.get("memberId") ?? "");

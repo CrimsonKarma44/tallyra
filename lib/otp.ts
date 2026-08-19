@@ -8,6 +8,7 @@ export const MAX_ATTEMPTS = 5;
 export const AUTH_KIND = {
   passwordReset: "password-reset",
   emailVerification: "email-verification",
+  orgEmailVerification: "org-email-verification",
 } as const;
 
 export function generateOtp(): string {

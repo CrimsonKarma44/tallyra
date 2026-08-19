@@ -52,6 +52,23 @@ export async function transferOrgAdmin(orgId: string, successorId: string) {
   });
 }
 
+/** Delete an organization that has no members. The admin account stays. */
+export async function deleteOrgOnly(orgId: string): Promise<void> {
+  await prisma.$transaction(async (tx) => {
+    const org = await tx.organization.findUnique({
+      where: { id: orgId },
+      select: { _count: { select: { members: true } } },
+    });
+    if (!org) {
+      throw new Error("Organization not found.");
+    }
+    if (org._count.members > 0) {
+      throw new Error("Remove the organization's members first.");
+    }
+    await tx.organization.delete({ where: { id: orgId } });
+  });
+}
+
 export async function deleteOrgWithAdmin(orgId: string, adminId: string) {
   await prisma.$transaction(async (tx) => {
     const org = await tx.organization.findUnique({

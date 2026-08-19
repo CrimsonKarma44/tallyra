@@ -1,12 +1,38 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { AddMemberForm } from "@/components/AddMemberForm";
+import { OrgEmailVerifyForm } from "@/components/OrgEmailVerifyForm";
 import { RemoveMemberButton } from "@/components/RemoveMemberButton";
 import { getOrgDetails } from "@/lib/org";
 import { requireVerifiedUser } from "@/lib/session";
+import { prisma } from "@/lib/prisma";
 
 export default async function OrgPage() {
   const user = await requireVerifiedUser();
   if (!user.organizationId) {
+    const adminOrg = await prisma.organization.findUnique({
+      where: { adminId: user.userId },
+      select: { name: true },
+    });
+    if (adminOrg) {
+      return (
+        <main className="main">
+          <div className="sale-card">
+            <h1>{adminOrg.name}</h1>
+            <p className="lede">You created this organization but haven&apos;t joined it yet.</p>
+            <p className="muted">
+              Your sales book is still personal. Join the organization from Settings &rarr;
+              Your organizations to share your ledger with its members.
+            </p>
+            <div className="btn-row">
+              <Link className="btn" href="/settings">
+                Go to Settings
+              </Link>
+            </div>
+          </div>
+        </main>
+      );
+    }
     return (
       <main className="main">
         <div className="sale-card">
@@ -15,9 +41,14 @@ export default async function OrgPage() {
             You are not part of an organization, so your sales book stays personal.
           </p>
           <p className="muted">
-            Organizations are created at sign-up. When an admin adds an account, that
-            member joins the organization&apos;s shared ledger.
+            Create an organization from Settings, or wait until an admin adds your
+            account to theirs.
           </p>
+          <div className="btn-row">
+            <Link className="btn" href="/settings">
+              Create an organization
+            </Link>
+          </div>
         </div>
       </main>
     );
@@ -63,6 +94,16 @@ export default async function OrgPage() {
             </table>
           </div>
         </section>
+
+        {user.isOrgAdmin && org.email && !org.emailVerifiedAt ? (
+          <>
+            <hr className="settings-divider" />
+            <section className="settings-section">
+              <h2>Verify organization email</h2>
+              <OrgEmailVerifyForm />
+            </section>
+          </>
+        ) : null}
 
         {user.isOrgAdmin ? (
           <>

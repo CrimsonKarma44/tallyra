@@ -20,7 +20,8 @@ This is the SD-01 capstone MVP: **CRUD**, **totals**, **simple auth**, **HTTP AP
 - User settings (`/settings`): profile picture, display name, and password change
 - Profile picture shown in the top bar
 - Organizations at `/org`: shared ledger plus an admin who adds and removes member accounts
-- Signup email verification and org alert emails via optional SMTP: organization accounts are **blocked from the ledger until verified**; personal accounts are never blocked (banner + no password recovery until verified)
+- Personal accounts can create an organization from `/settings` and join it later from "Your organizations" (existing sales/expenses move into the shared ledger on join)
+- Signup email verification and org alert emails via optional SMTP: organization accounts are **blocked from the ledger until verified**; personal accounts are never blocked (banner + no password recovery until verified); a new organization email is verified with its own code before the admin can add members
 - Forgot-password reset codes (valid 15 min) when the account's email is verified
 - Account management: admins add/remove members and transfer admin; any user can delete their own account from `/settings`
 - Emails are unique per context: one account per email within each org, one personal account per email, unique company emails
@@ -63,6 +64,15 @@ At `/signup` you pick an account type:
 
 Both options require an email address. **Personal accounts** are never blocked from their ledger: when SMTP is configured they get a verification code email and a "verify your email" banner until confirmed, and an unverified personal account loses password recovery. **Organization accounts are enforced**: the creating admin (and any added member) is redirected to `/verify-email` and blocked from `/sales`, `/expenses`, `/org`, and the API until the emailed code is entered. When SMTP is unset, every new account is auto-verified and no emails are sent.
 
+### Creating an organization from Settings
+
+A personal account can create an organization from `/settings` → **Create an organization**. You become the org's **admin but not a member yet** — your personal sales book stays private until you join from **Your organizations**. The organization email is either your own address (same email) or a new address:
+
+- **Same email** — verified right away if your account's email is verified; otherwise it becomes verified together with your account when you confirm your email.
+- **New email** — a 6-digit code is emailed to it; the org shows "Email not verified" until it's confirmed. Until then the admin **cannot add members** and no member/login alerts are sent (the admin still uses their own ledger normally).
+
+"Your organizations" lists every org you admin or that uses your email as its address, with verification status and a **Join** button. Joining moves your existing sales and expenses into the shared ledger.
+
 ## Environment
 
 | Variable | Purpose |
@@ -79,7 +89,7 @@ Both options require an email address. **Personal accounts** are never blocked f
 | `SMTP_SECURE` | `false` for STARTTLS, `true` for implicit TLS (465) |
 | `SMTP_FROM` | Sender address; defaults to `SMTP_USER` |
 
-When SMTP is configured, a 6-digit code is emailed and accounts show a "verify your email" banner until confirmed (`/verify-email`, code valid 60 min). Organization accounts are **blocked from the ledger** until verified; personal accounts are not blocked but lose password recovery until verified. Forgot-password flow: `/forgot-password` → 6-digit reset code (valid 15 min, single-use, max 5 attempts) → enter the code and a new password inline on the same page (or `/reset-password?username=…`). Org admins also get alerts when a member is added or signs in. When SMTP is unset, every account is auto-verified and no emails are sent.
+When SMTP is configured, a 6-digit code is emailed and accounts show a "verify your email" banner until confirmed (`/verify-email`, code valid 60 min). Organization accounts are **blocked from the ledger** until verified; personal accounts are not blocked but lose password recovery until verified. Organizations created with a **new email** send their own code to that address (verified from Settings → Your organizations or `/org`); until it's confirmed the admin can't add members and no alerts are sent. Forgot-password flow: `/forgot-password` → 6-digit reset code (valid 15 min, single-use, max 5 attempts) → enter the code and a new password inline on the same page (or `/reset-password?username=…`). Org admins also get alerts when a member is added or signs in. When SMTP is unset, every account is auto-verified and no emails are sent.
 
 ## Docker
 
@@ -105,7 +115,7 @@ APP_CURRENCY=PHP
 ## Data model
 
 - **User** — agent account (`username`, `passwordHash`, optional `displayName` and avatar image bytes, optional `organizationId`); seeded on first setup, or created via `/signup`
-- **Organization** — shared ledger (`name`, `adminId`, `members`); created at sign-up, members added by the admin
+- **Organization** — shared ledger (`name`, optional verified `email`, `adminId`, `members`); created at sign-up or from a personal account's Settings
 - **Transaction** — `soldAt`, `note`, `taxRateBps`, stored cents totals, optional receiver fields, `createdBy`
 - **TransactionLine** — `name`, `quantity`, `unitPriceCents`, `lineTotalCents`
 - **Expense** — money going out (`spentAt`, `amountCents`, `note`, `createdBy`); shares the same visibility rules as sales
@@ -137,7 +147,9 @@ Expenses are recorded on `/expenses` (date, amount, note); totals are shown per 
 - Upload a **profile picture** (JPEG, PNG, or WebP, up to 2MB). The image is stored as a BLOB on the user row and shown in the top bar; remove it anytime.
 - Set a **display name** (shown in the top bar; blank falls back to the username).
 - **Change the password** (verify the current password first; minimum 8 characters).
-- **Delete the account** (confirm with the current password): a personal account's own sales/expenses are deleted with it; an org member's shared-ledger records are reassigned to the admin and their account is removed; the org admin can only delete their account after transferring admin to another member (if the admin is the only member, deleting deletes the whole org and its records).
+- **Create an organization** (personal accounts only): become the admin of a shared ledger while staying on your personal book until you join. See "Creating an organization from Settings".
+- **Your organizations**: orgs you admin or that use your email, with verification status and a Join action.
+- **Delete the account** (confirm with the current password): a personal account's own sales/expenses are deleted with it; an org member's shared-ledger records are reassigned to the admin and their account is removed; the org admin can only delete their account after transferring admin to another member (if the admin is the only member, deleting deletes the whole org and its records). A personal account that created an org but hasn't joined it deletes the empty org along with the account.
 - **Transfer admin** (org admins only): hand the organization to another member before deleting your account.
 
 ### Totals

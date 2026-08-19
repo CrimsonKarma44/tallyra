@@ -59,6 +59,16 @@ export function verifyEmailEmail(opts: { username: string; code: string; expires
   return { subject, text, html };
 }
 
+export function verifyOrgEmailEmail(opts: { orgName: string; code: string; expiresInMinutes: number }) {
+  const subject = `Verify ${opts.orgName} email`;
+  const text = `Verify the email address for ${opts.orgName}.\n\nYour verification code is ${opts.code}. It expires in ${opts.expiresInMinutes} minutes and can only be used once.\n\nIf you didn't create this organization, you can ignore this email.`;
+  const html = emailLayout(
+    subject,
+    `<p style="margin:0 0 16px;font-size:14px;line-height:1.5;">Confirm this address to activate member invites and alerts for <strong>${opts.orgName}</strong>.</p>${otpBlock(opts.code, opts.expiresInMinutes)}`,
+  );
+  return { subject, text, html };
+}
+
 export function newMemberAlertEmail(opts: { orgName: string; memberUsername: string; addedBy: string }) {
   const subject = `New member added to ${opts.orgName}`;
   const text = `${opts.memberUsername} was added to ${opts.orgName} by ${opts.addedBy}.`;
