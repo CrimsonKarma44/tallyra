@@ -1,6 +1,10 @@
 import { json, options, readJson, requireApiLedgerUser } from "@/lib/api-http";
-import { createSaleRecord, listSalesRecords, serializeSale } from "@/lib/sales-service";
-import { SaleValidationError } from "@/lib/totals";
+import {
+  ExpenseValidationError,
+  createExpenseRecord,
+  listExpensesRecords,
+  serializeExpense,
+} from "@/lib/expenses";
 
 export function OPTIONS() {
   return options();
@@ -12,12 +16,11 @@ export async function GET(request: Request) {
     return auth.error;
   }
   const { searchParams } = new URL(request.url);
-  const sales = await listSalesRecords(auth.user.userId, {
-    q: searchParams.get("q") ?? undefined,
+  const expenses = await listExpensesRecords(auth.user.userId, {
     from: searchParams.get("from") ?? undefined,
     to: searchParams.get("to") ?? undefined,
   });
-  return json({ sales: sales.map(serializeSale) });
+  return json({ expenses: expenses.map(serializeExpense) });
 }
 
 export async function POST(request: Request) {
@@ -26,12 +29,12 @@ export async function POST(request: Request) {
     return auth.error;
   }
   try {
-    const sale = await createSaleRecord(auth.user.userId, await readJson(request));
-    return json({ sale: serializeSale(sale) }, 201);
+    const expense = await createExpenseRecord(auth.user.userId, await readJson(request));
+    return json({ expense: serializeExpense(expense) }, 201);
   } catch (error) {
-    if (error instanceof SaleValidationError) {
+    if (error instanceof ExpenseValidationError) {
       return json({ error: error.message }, 400);
     }
-    return json({ error: "Could not create the sale." }, 500);
+    return json({ error: "Could not create the expense." }, 500);
   }
 }

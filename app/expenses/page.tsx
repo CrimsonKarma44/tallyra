@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { listExpenses } from "@/app/actions/expenses";
-import { requireUser } from "@/lib/session";
+import { requireVerifiedUser } from "@/lib/session";
 import { formatCents, formatSoldAt } from "@/lib/money";
 import { ExpenseForm } from "@/components/ExpenseForm";
 import { DeleteExpenseButton } from "@/components/DeleteExpenseButton";
@@ -11,7 +11,7 @@ export default async function ExpensesPage({
   searchParams: Promise<{ from?: string; to?: string }>;
 }) {
   const { from = "", to = "" } = await searchParams;
-  const user = await requireUser();
+  const user = await requireVerifiedUser();
   const expenses = await listExpenses({ from, to });
   const totalCents = expenses.reduce((sum, expense) => sum + expense.amountCents, 0);
 

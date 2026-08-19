@@ -14,7 +14,7 @@ export function ResetPasswordForm({ username }: { username?: string }) {
       {state?.error ? <p className="error">{state.error}</p> : null}
       <p>
         <label>
-          Username
+          Username or email
           <input name="username" autoComplete="username" required autoFocus defaultValue={username} />
         </label>
       </p>

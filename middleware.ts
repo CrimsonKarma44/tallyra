@@ -12,7 +12,11 @@ export async function middleware(request: NextRequest) {
   }
 
   const isLanding = pathname === "/";
-  const isPublicAuth = pathname === "/login" || pathname === "/signup";
+  const isPublicAuth =
+    pathname === "/login" ||
+    pathname === "/signup" ||
+    pathname === "/forgot-password" ||
+    pathname === "/reset-password";
   const isPublic = isLanding || isPublicAuth;
 
   if (!session.userId && !isPublic) {

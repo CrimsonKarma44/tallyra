@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { listSales } from "@/app/actions/sales";
 import { formatCents, formatSoldAt } from "@/lib/money";
-import { requireUser } from "@/lib/session";
+import { requireVerifiedUser } from "@/lib/session";
 import { getAnalytics } from "@/lib/analytics";
 import { RevenueChart } from "@/components/RevenueChart";
 
@@ -11,7 +11,7 @@ export default async function SalesPage({
   searchParams: Promise<{ q?: string; from?: string; to?: string }>;
 }) {
   const { q = "", from = "", to = "" } = await searchParams;
-  const user = await requireUser();
+  const user = await requireVerifiedUser();
   const [sales, analytics] = await Promise.all([
     listSales({ q, from, to }),
     getAnalytics({ id: user.userId, organizationId: user.organizationId }, { from, to }),

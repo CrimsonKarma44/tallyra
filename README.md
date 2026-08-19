@@ -19,10 +19,12 @@ This is the SD-01 capstone MVP: **CRUD**, **totals**, **simple auth**, **HTTP AP
 - Optional receiver (name/company, account number, contact, address)
 - User settings (`/settings`): profile picture, display name, and password change
 - Profile picture shown in the top bar
-- Organizations at `/org`: shared ledger plus an admin who adds member accounts
-- Signup email verification, forgot-password reset, and org alert emails via optional SMTP (auto-verified when SMTP is unset)
+- Organizations at `/org`: shared ledger plus an admin who adds and removes member accounts
+- Signup email verification and org alert emails via optional SMTP: organization accounts are **blocked from the ledger until verified**; personal accounts are never blocked (banner + no password recovery until verified)
+- Forgot-password reset codes (valid 15 min) when the account's email is verified
+- Account management: admins add/remove members and transfer admin; any user can delete their own account from `/settings`
 - Emails are unique per context: one account per email within each org, one personal account per email, unique company emails
-- REST API (`/api/v1`) so other services can read and write the same ledger
+- REST API (`/api/v1`) so other services can read and write the same ledger (sales **and** expenses)
 - SQLite file storage (no external database)
 
 ## Stack
@@ -59,7 +61,7 @@ At `/signup` you pick an account type:
 - **Personal** — your own private sales book (each agent sees only their own sales).
 - **Create an organization** — you become the org's **admin** and its first member. Every member shares one ledger at `/sales`, and the list shows who recorded each sale (Agent column). The admin adds member accounts from the **Organization** page (`/org`); members can view all org sales but only edit/delete their own.
 
-Both options require an email address. When SMTP is configured, the account must be verified by the emailed code before the banner clears.
+Both options require an email address. **Personal accounts** are never blocked from their ledger: when SMTP is configured they get a verification code email and a "verify your email" banner until confirmed, and an unverified personal account loses password recovery. **Organization accounts are enforced**: the creating admin (and any added member) is redirected to `/verify-email` and blocked from `/sales`, `/expenses`, `/org`, and the API until the emailed code is entered. When SMTP is unset, every new account is auto-verified and no emails are sent.
 
 ## Environment
 
@@ -77,7 +79,7 @@ Both options require an email address. When SMTP is configured, the account must
 | `SMTP_SECURE` | `false` for STARTTLS, `true` for implicit TLS (465) |
 | `SMTP_FROM` | Sender address; defaults to `SMTP_USER` |
 
-When SMTP is configured, sign-up requires a verifiable email: a 6-digit code is emailed and accounts show a "verify your email" banner until confirmed (`/verify-email`, code valid 60 min). Forgot-password flow: `/forgot-password` → 6-digit reset code (valid 15 min, single-use, max 5 attempts) → `/reset-password`. Org admins also get alerts when a member is added or signs in.
+When SMTP is configured, a 6-digit code is emailed and accounts show a "verify your email" banner until confirmed (`/verify-email`, code valid 60 min). Organization accounts are **blocked from the ledger** until verified; personal accounts are not blocked but lose password recovery until verified. Forgot-password flow: `/forgot-password` → 6-digit reset code (valid 15 min, single-use, max 5 attempts) → enter the code and a new password inline on the same page (or `/reset-password?username=…`). Org admins also get alerts when a member is added or signs in. When SMTP is unset, every account is auto-verified and no emails are sent.
 
 ## Docker
 
@@ -115,7 +117,8 @@ Money is stored as integer cents. The server always recomputes totals on create/
 - **Personal accounts** only see, edit, and delete their own sales.
 - **Organization members** share the org's full ledger for viewing; only the **admin** can edit/delete any member's sale, while other members can only edit/delete their own.
 - **Expenses** follow the same rules: personal accounts see their own; org members share the org's expenses (delete is admin-only for other people's, otherwise your own).
-- The same rules apply to the REST API: each token is scoped to its user's visibility.
+- **Unverified organization accounts** (created while SMTP is on) are blocked from the ledger until they verify their email; unverified personal accounts are only blocked from password recovery.
+- The same rules apply to the REST API: each token is scoped to its user's visibility, and unverified org tokens get `403 Email not verified.` on ledger endpoints.
 
 ### Analytics
 
@@ -134,6 +137,8 @@ Expenses are recorded on `/expenses` (date, amount, note); totals are shown per 
 - Upload a **profile picture** (JPEG, PNG, or WebP, up to 2MB). The image is stored as a BLOB on the user row and shown in the top bar; remove it anytime.
 - Set a **display name** (shown in the top bar; blank falls back to the username).
 - **Change the password** (verify the current password first; minimum 8 characters).
+- **Delete the account** (confirm with the current password): a personal account's own sales/expenses are deleted with it; an org member's shared-ledger records are reassigned to the admin and their account is removed; the org admin can only delete their account after transferring admin to another member (if the admin is the only member, deleting deletes the whole org and its records).
+- **Transfer admin** (org admins only): hand the organization to another member before deleting your account.
 
 ### Totals
 
@@ -163,8 +168,13 @@ Other services authenticate with a bearer token from login (or signup). Tokens a
 | `POST` | `/api/v1/sales` | yes | Create a sale |
 | `PATCH` | `/api/v1/sales/:id` | yes | Replace a sale the caller may edit |
 | `DELETE` | `/api/v1/sales/:id` | yes | Delete a sale the caller may edit |
+| `GET` | `/api/v1/expenses` | yes | List the expenses visible to the caller (`from`, `to` query params) |
+| `GET` | `/api/v1/expenses/:id` | yes | One expense visible to the caller |
+| `POST` | `/api/v1/expenses` | yes | Create an expense |
+| `PATCH` | `/api/v1/expenses/:id` | yes | Replace an expense the caller may edit |
+| `DELETE` | `/api/v1/expenses/:id` | yes | Delete an expense the caller may edit |
 
-Send `Authorization: Bearer <token>` and `Content-Type: application/json`. Amounts in JSON are currency units (not cents). The server always recomputes totals. Each token can only read what the same visibility rules allow (own sales for personal accounts, the whole org ledger for members) and can only edit/delete sales it's allowed to edit (own sales, or any org sale for the org admin); anything else returns `404 Sale not found.`
+Send `Authorization: Bearer <token>` and `Content-Type: application/json`. Amounts in JSON are currency units (not cents). The server always recomputes totals. Each token can only read what the same visibility rules allow (own sales for personal accounts, the whole org ledger for members) and can only edit/delete sales it's allowed to edit (own sales, or any org sale for the org admin); anything else returns `404 Sale not found.` Organization tokens whose email is unverified get `403 Email not verified.` on all ledger endpoints. The same rules apply to expenses (`404 Expense not found.`).
 
 ### Create a sale
 
@@ -190,6 +200,21 @@ curl -sS http://localhost:3000/api/v1/sales \
 ```
 
 Response money fields: `subtotal`, `tax`, `total`, and each line’s `unitPrice` / `lineTotal`. Receiver is `{ name, account, contact, address }` (null when omitted).
+
+### Create an expense
+
+```bash
+curl -sS http://localhost:3000/api/v1/expenses \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "spentAt": "2026-08-18T09:00:00",
+    "amount": 2500.00,
+    "note": "Wholesale restock"
+  }'
+```
+
+Response money field: `amount` (currency units); plus `id`, `spentAt`, `note`, `currency`, and `createdBy`.
 
 ## Scripts
 
@@ -226,6 +251,13 @@ Response money fields: `subtotal`, `tax`, `total`, and each line’s `unitPrice`
 21. Record an expense at `/expenses` → the sales dashboard Revenue/Expenses/Net cards update; a solo user never sees another user's expenses
 22. Sales dashboard shows the revenue-vs-expenses chart and stat cards; an org member sees the per-agent breakdown; a solo user does not
 23. Filter by date → cards, chart, by-agent table, and top items reflect the chosen range
+24. Personal signup with SMTP on → verification email + banner, but the dashboard is still usable unverified; password reset (`/forgot-password`) sends nothing until the email is verified
+25. Org signup with SMTP on → admin lands on `/verify-email` and `/sales` redirects back there until the code is entered; after verifying, the ledger and `/org` open up
+26. A member added by the admin (SMTP on) is likewise blocked until they verify
+27. `/settings` → delete a personal account with the current password → signed out, the account and its ledger are gone
+28. Admin removes a member on `/org` → the member's sales/expenses are reassigned to the admin; the member can no longer sign in
+29. Admin with members deletes their account → rejected until they transfer admin (settings) to another member; admin alone deletes their account → whole org + records removed
+30. `POST /api/v1/expenses` creates an expense, it lists under `/api/v1/expenses` and shows in the dashboard; an unverified org token gets `403 Email not verified.`
 
 ## Receipt scan
 

@@ -19,7 +19,7 @@ import { AUTH_KIND, RESET_TTL_MS, VERIFY_TTL_MS, consumeAuthToken, createAuthTok
 import { memberLoginAlertEmail, passwordResetEmail, verifyEmailEmail } from "@/lib/mail-templates";
 
 export type AuthState = { error?: string } | null;
-export type OtpState = { error?: string; success?: string } | null;
+export type OtpState = { error?: string; success?: string; identity?: string } | null;
 
 function safeNextPath(raw: string): string {
   if (raw.startsWith("/") && !raw.startsWith("//") && raw !== "/") {
@@ -150,7 +150,10 @@ export async function requestPasswordResetAction(
     return { error: "Password reset email is not configured on this server." };
   }
   const user = await prisma.user.findFirst({
-    where: { OR: [{ username: identity }, { email: identity }] },
+    where: {
+      OR: [{ username: identity }, { email: identity }],
+      emailVerifiedAt: { not: null },
+    },
     select: { id: true, username: true, email: true },
   });
   if (user?.email) {
@@ -167,7 +170,8 @@ export async function requestPasswordResetAction(
     }
   }
   return {
-    success: "If that username or email is on file, a reset code has been sent to it.",
+    success: "If that username or email is on file with a verified email address, a reset code has been sent to it.",
+    identity: normalizeUsername(identity),
   };
 }
 
@@ -175,13 +179,15 @@ export async function resetPasswordAction(
   prevState: OtpState,
   formData: FormData,
 ): Promise<OtpState> {
-  const username = normalizeUsername(String(formData.get("username") ?? ""));
+  const identity = normalizeUsername(
+    String(formData.get("username") ?? formData.get("identity") ?? ""),
+  );
   const code = String(formData.get("code") ?? "");
   const password = String(formData.get("password") ?? "");
   const confirm = String(formData.get("confirm") ?? "");
 
-  if (!username) {
-    return { error: "Username is required." };
+  if (!identity) {
+    return { error: "Username or email is required." };
   }
   const passwordError = validatePassword(password);
   if (passwordError) {
@@ -190,8 +196,8 @@ export async function resetPasswordAction(
   if (password !== confirm) {
     return { error: "Passwords do not match." };
   }
-  const user = await prisma.user.findUnique({
-    where: { username },
+  const user = await prisma.user.findFirst({
+    where: { OR: [{ username: identity }, { email: identity }] },
     select: { id: true },
   });
   if (!user) {

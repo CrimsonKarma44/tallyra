@@ -1,6 +1,11 @@
 import { json, options, readJson, requireApiLedgerUser } from "@/lib/api-http";
-import { deleteSaleRecord, getSaleRecord, serializeSale, updateSaleRecord } from "@/lib/sales-service";
-import { SaleValidationError } from "@/lib/totals";
+import {
+  ExpenseValidationError,
+  deleteExpenseRecord,
+  getExpenseRecord,
+  serializeExpense,
+  updateExpenseRecord,
+} from "@/lib/expenses";
 
 export function OPTIONS() {
   return options();
@@ -12,11 +17,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     return auth.error;
   }
   const { id } = await params;
-  const sale = await getSaleRecord(id, auth.user.userId);
-  if (!sale) {
-    return json({ error: "Sale not found." }, 404);
+  const expense = await getExpenseRecord(id, auth.user.userId);
+  if (!expense) {
+    return json({ error: "Expense not found." }, 404);
   }
-  return json({ sale: serializeSale(sale) });
+  return json({ expense: serializeExpense(expense) });
 }
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -26,16 +31,16 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
   const { id } = await params;
   try {
-    const sale = await updateSaleRecord(id, auth.user.userId, await readJson(request));
-    if (!sale) {
-      return json({ error: "Sale not found." }, 404);
+    const expense = await updateExpenseRecord(id, auth.user.userId, await readJson(request));
+    if (!expense) {
+      return json({ error: "Expense not found." }, 404);
     }
-    return json({ sale: serializeSale(sale) });
+    return json({ expense: serializeExpense(expense) });
   } catch (error) {
-    if (error instanceof SaleValidationError) {
+    if (error instanceof ExpenseValidationError) {
       return json({ error: error.message }, 400);
     }
-    return json({ error: "Could not update the sale." }, 500);
+    return json({ error: "Could not update the expense." }, 500);
   }
 }
 
@@ -45,9 +50,9 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     return auth.error;
   }
   const { id } = await params;
-  const deleted = await deleteSaleRecord(id, auth.user.userId);
+  const deleted = await deleteExpenseRecord(id, auth.user.userId);
   if (!deleted) {
-    return json({ error: "Sale not found." }, 404);
+    return json({ error: "Expense not found." }, 404);
   }
   return json({ ok: true });
 }

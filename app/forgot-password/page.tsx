@@ -9,7 +9,8 @@ export default function ForgotPasswordPage() {
       <div className="auth-card">
         <h1>Forgot your password?</h1>
         <p className="lede">
-          Enter your username or email and we&apos;ll send a one-time reset code.
+          Enter your username or email and we&apos;ll send a one-time reset code. Only accounts
+          with a verified email can recover their password.
         </p>
         <ForgotPasswordForm />
         <p className="auth-switch">

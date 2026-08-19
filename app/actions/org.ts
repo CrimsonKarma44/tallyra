@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { normalizeUsername, validateEmail, validatePassword, validateUsername } from "@/lib/auth";
 import { addOrgMember } from "@/lib/org";
-import { requireUser } from "@/lib/session";
+import { requireVerifiedUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { isMailConfigured, sendMail } from "@/lib/mail";
 import { AUTH_KIND, VERIFY_TTL_MS, createAuthToken } from "@/lib/otp";
@@ -15,7 +15,7 @@ export async function addMemberAction(
   prevState: OrgActionState,
   formData: FormData,
 ): Promise<OrgActionState> {
-  const user = await requireUser();
+  const user = await requireVerifiedUser();
   if (!user.isOrgAdmin || !user.organizationId) {
     return { error: "Only an organization admin can add members." };
   }

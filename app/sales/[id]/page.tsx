@@ -3,11 +3,11 @@ import { getSale, updateSale } from "@/app/actions/sales";
 import { DeleteSaleButton } from "@/components/DeleteSaleButton";
 import { SaleForm } from "@/components/SaleForm";
 import { formatCents, formatSoldAt } from "@/lib/money";
-import { requireUser } from "@/lib/session";
+import { requireVerifiedUser } from "@/lib/session";
 
 export default async function SalePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const user = await requireUser();
+  const user = await requireVerifiedUser();
   const sale = await getSale(id);
   if (!sale) {
     notFound();

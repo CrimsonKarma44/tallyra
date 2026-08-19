@@ -6,7 +6,7 @@ import { z } from "zod";
 import { pesosToCents } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 import { editScope, saleQueryWhere, saleScope, type UserContext } from "@/lib/sales-service";
-import { requireUser } from "@/lib/session";
+import { requireVerifiedUser } from "@/lib/session";
 import { computeTotals, SaleValidationError, type LineInput } from "@/lib/totals";
 
 export type SaleActionState = { error?: string } | null;
@@ -91,7 +91,7 @@ export async function createSale(
   prevState: SaleActionState,
   formData: FormData,
 ): Promise<SaleActionState> {
-  const user = await requireUser();
+  const user = await requireVerifiedUser();
   try {
     const { soldAt, taxRateBps, note, receiverName, receiverAccount, receiverContact, receiverAddress, totals } =
       readSaleForm(formData);
@@ -136,7 +136,7 @@ export async function updateSale(
   prevState: SaleActionState,
   formData: FormData,
 ): Promise<SaleActionState> {
-  const user = await requireUser();
+  const user = await requireVerifiedUser();
   const id = String(formData.get("id") ?? "");
   if (!id) {
     return { error: "Missing sale id." };
@@ -190,7 +190,7 @@ export async function updateSale(
 }
 
 export async function deleteSale(formData: FormData) {
-  const user = await requireUser();
+  const user = await requireVerifiedUser();
   const id = String(formData.get("id") ?? "");
   if (!id) {
     return;
@@ -201,7 +201,7 @@ export async function deleteSale(formData: FormData) {
 }
 
 export async function listSales(params: { q?: string; from?: string; to?: string }) {
-  const user = await requireUser();
+  const user = await requireVerifiedUser();
   return prisma.transaction.findMany({
     where: saleQueryWhere(userContext(user), params),
     include: {
@@ -213,7 +213,7 @@ export async function listSales(params: { q?: string; from?: string; to?: string
 }
 
 export async function getSale(id: string) {
-  const user = await requireUser();
+  const user = await requireVerifiedUser();
   return prisma.transaction.findUnique({
     where: { id, ...saleScope(userContext(user)) },
     include: {

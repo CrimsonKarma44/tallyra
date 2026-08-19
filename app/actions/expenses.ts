@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { editScope } from "@/lib/sales-service";
-import { requireUser } from "@/lib/session";
+import { requireVerifiedUser } from "@/lib/session";
 import { ExpenseValidationError, expenseListWhere, parseExpenseWrite } from "@/lib/expenses";
 
 export type ExpenseActionState = { error?: string } | null;
@@ -13,7 +13,7 @@ export async function createExpense(
   prevState: ExpenseActionState,
   formData: FormData,
 ): Promise<ExpenseActionState> {
-  const user = await requireUser();
+  const user = await requireVerifiedUser();
   try {
     const { spentAt, amountCents, note } = parseExpenseWrite({
       spentAt: String(formData.get("spentAt") ?? "") || undefined,
@@ -38,7 +38,7 @@ export async function createExpense(
 }
 
 export async function deleteExpense(formData: FormData) {
-  const user = await requireUser();
+  const user = await requireVerifiedUser();
   const id = String(formData.get("id") ?? "");
   if (!id) {
     return;
@@ -52,7 +52,7 @@ export async function deleteExpense(formData: FormData) {
 }
 
 export async function listExpenses(params: { from?: string; to?: string }) {
-  const user = await requireUser();
+  const user = await requireVerifiedUser();
   return prisma.expense.findMany({
     where: expenseListWhere(
       { id: user.userId, organizationId: user.organizationId },

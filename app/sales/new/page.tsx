@@ -1,9 +1,9 @@
 import { createSale } from "@/app/actions/sales";
 import { SaleForm } from "@/components/SaleForm";
-import { requireUser } from "@/lib/session";
+import { requireVerifiedUser } from "@/lib/session";
 
 export default async function NewSalePage() {
-  await requireUser();
+  await requireVerifiedUser();
   return (
     <main className="main">
       <div className="sale-card">

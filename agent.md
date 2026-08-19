@@ -28,13 +28,14 @@
 - Record sale (`/sales/new`) vs scan receipt (`/sales/scan` overlay then filled form)
 - Optional receiver fields on each sale
 - User settings at `/settings`: profile picture upload/remove, display name, password change
+- Account management: any user can delete their own account (personal ledger cascades; org records reassign to the admin); org admins remove members on `/org` and transfer admin on `/settings`; an admin who is the only member can delete the whole org with their account
 - Top bar shows the signed-in agent's profile picture and display name (initials fallback)
 - Expenses at `/expenses`: record money going out (date, amount, note); same visibility rules as sales (own for solo, shared org ledger for members)
-- Email via SMTP (optional): signup email verification with a 6-digit code, forgot-password reset codes, and org alert emails (new member added, member sign-in) to the company email; when SMTP is unset accounts are auto-verified and no emails are sent
+- Email via SMTP (optional): signup email verification with a 6-digit code, forgot-password reset codes, and org alert emails (new member added, member sign-in) to the company email; when SMTP is unset accounts are auto-verified and no emails are sent. Personal accounts are never blocked from the ledger (banner only, and password recovery is disabled until verified); organization accounts are enforced — unverified admins/members are blocked from `/sales`, `/expenses`, `/org`, and the API until they verify
 - Emails are unique per context: one personal account per email and one account per email per org; the same email may exist across different contexts as separate accounts; company emails are unique across organizations
 - Sales dashboard analytics: stat cards (revenue, expenses, net, count, average, items sold), a server-rendered SVG revenue-vs-expenses line chart with a side-by-side top-items panel, per-agent breakdown for orgs (incoming/outgoing/net), and top items; honors the date filter and visibility scope
 - Profile images stored as BLOBs on the `User` row; served via `/api/me/avatar` (session cookie)
-- Public REST API at `/api/v1` (bearer token) for other ledger clients
+- Public REST API at `/api/v1` (bearer token) for other ledger clients; covers sales **and** expenses (list/get/create/update/delete), with the same visibility and email-verification rules
 - Local run (`npm run db:setup && npm run dev`) and Docker Compose path
 - README documents env, schema, totals, API, settings, and optional Railway/Render/Fly deploy
 - Demo video not produced
@@ -55,7 +56,7 @@ When working on this project:
 ## Decisions (locked)
 - **Stack**: Next.js App Router, TypeScript, Prisma, SQLite
 - **Auth**: Seeded agent from `AUTH_USERNAME` / `AUTH_PASSWORD`; agents can also register at `/signup` (personal or create-org admin); iron-session cookie
-- **Email**: `SMTP_HOST` / `SMTP_USER` / `SMTP_PASS` (port `SMTP_PORT` 587, `SMTP_SECURE` false by default, `SMTP_FROM` optional); reset codes last 15 min, verification codes 60 min, 6-digit, single-use, max 5 attempts, prior codes invalidated on resend; login is never blocked — unverified accounts see a banner and verify at `/verify-email`
+- **Email**: `SMTP_HOST` / `SMTP_USER` / `SMTP_PASS` (port `SMTP_PORT` 587, `SMTP_SECURE` false by default, `SMTP_FROM` optional); reset codes last 15 min, verification codes 60 min, 6-digit, single-use, max 5 attempts, prior codes invalidated on resend; login is never blocked — unverified personal accounts see a banner and verify at `/verify-email` (password recovery requires a verified email); unverified org accounts are blocked from the ledger until verified
 - **Persistence**: SQLite file (`DATABASE_URL=file:./dev.db` → `prisma/dev.db` locally, `/data/pos.db` in Docker)
 - **Money**: Integer cents; totals recomputed on the server
 - **Profile image**: Stored as a BLOB on the `User` row (no filesystem/volume); JPEG/PNG/WebP up to 2MB, served via `/api/me/avatar` for the signed-in session only
@@ -65,8 +66,9 @@ When working on this project:
 - **Receiver**: optional name/company, account, contact, address
 - **HTTP API**: `/api/v1` JSON + bearer tokens so other services can share the ledger
 - **Sales isolation**: solo users scope to `createdById`; org members scope to `createdBy.organizationId` (view), and edits use `editScope` (org admin → whole org, others → own sales); out-of-scope access returns 404 "Sale not found."
-- **Organizations**: single admin (`Organization.adminId`, unique) created at sign-up; members added only by the admin; no self-join, member removal, or org deletion in this pass
-- **Expenses**: `spentAt`, `amountCents`, `note`, `createdBy`; reuses the sales scope helpers (view scope for listing, edit scope for delete — org admin can delete any org expense, others their own); amount must be > 0; note ≤ 200 chars
+- **Organizations**: single admin (`Organization.adminId`, unique) created at sign-up; members added only by the admin; the admin can remove members (records reassign to the admin) and transfer admin; an admin who is the only member can delete the org with their account; no self-join, org rename, or multiple admins in this pass
+- **Account deletion**: `deletePersonalAccount` cascades a solo user's sales/expenses/tokens; `removeOrgMember` reassigns shared-ledger records to the admin; `deleteOrgWithAdmin` deletes an alone-admin's org and records; all destructive ops in `lib/account-service.ts` (transactional), gated by current-password confirmation
+- **Expenses**: `spentAt`, `amountCents`, `note`, `createdBy`; reuses the sales scope helpers (view scope for listing, edit scope for delete — org admin can delete any org expense, others their own); amount must be > 0; note ≤ 200 chars; REST endpoints at `/api/v1/expenses` mirror the sales API
 - **Analytics**: pure aggregation in `lib/analytics.ts` (no DB dependency, unit-tested); day-key bucketing in local time with zero-filled ranges (last 30 days when unfiltered); chart is hand-rolled SVG (no chart library)
 
 ## Out of scope
@@ -76,8 +78,8 @@ When working on this project:
 - Multi-role auth, OAuth, SMS-based recovery
 - Payments, change due, refunds
 - Multi-store / offline sync
-- Org self-join, member removal, org rename/delete, multiple admins
-- Expense editing, categories, expense REST endpoints
+- Org self-join, org rename, multiple admins
+- Expense categories; expense editing in the web UI (REST PATCH exists)
 - Chart interactivity (tooltips/legend toggle); analytics export
 
 ## Next Immediate Steps
@@ -85,4 +87,4 @@ When working on this project:
 - Optional: push the Docker image to Railway / Render / Fly with a volume
 
 ---
-_Last updated: 2026-08-18_
+_Last updated: 2026-08-19_

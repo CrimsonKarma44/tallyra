@@ -1,6 +1,12 @@
 import { z } from "zod";
-import { pesosToCents } from "@/lib/money";
-import { saleScope, type UserContext } from "@/lib/sales-service";
+import { getCurrency, pesosToCents } from "@/lib/money";
+import {
+  editScope,
+  resolveUserContext,
+  saleScope,
+  type UserContext,
+} from "@/lib/sales-service";
+import { prisma } from "@/lib/prisma";
 
 export class ExpenseValidationError extends Error {}
 
@@ -57,4 +63,85 @@ export function expenseListWhere(
     }
   }
   return where;
+}
+
+const expenseInclude = {
+  createdBy: { select: { id: true, username: true } },
+};
+
+export function serializeExpense(
+  expense: {
+    id: string;
+    createdAt: Date;
+    updatedAt: Date;
+    spentAt: Date;
+    amountCents: number;
+    note: string;
+    createdBy: { id: string; username: string };
+  },
+) {
+  return {
+    id: expense.id,
+    spentAt: expense.spentAt.toISOString(),
+    createdAt: expense.createdAt.toISOString(),
+    updatedAt: expense.updatedAt.toISOString(),
+    amount: expense.amountCents / 100,
+    currency: getCurrency(),
+    note: expense.note,
+    createdBy: expense.createdBy,
+  };
+}
+
+export async function listExpensesRecords(userId: string, params: { from?: string; to?: string }) {
+  const user = await resolveUserContext(userId);
+  return prisma.expense.findMany({
+    where: expenseListWhere(user, params),
+    include: expenseInclude,
+    orderBy: { spentAt: "desc" },
+  });
+}
+
+export async function getExpenseRecord(id: string, userId: string) {
+  const user = await resolveUserContext(userId);
+  return prisma.expense.findUnique({
+    where: { id, ...saleScope(user) },
+    include: expenseInclude,
+  });
+}
+
+export async function createExpenseRecord(userId: string, input: unknown) {
+  const parsed = parseExpenseWrite(input);
+  return prisma.expense.create({
+    data: {
+      spentAt: parsed.spentAt,
+      amountCents: parsed.amountCents,
+      note: parsed.note,
+      createdById: userId,
+    },
+    include: expenseInclude,
+  });
+}
+
+export async function updateExpenseRecord(id: string, userId: string, input: unknown) {
+  const user = await resolveUserContext(userId);
+  const existing = await prisma.expense.findUnique({ where: { id, ...editScope(user) } });
+  if (!existing) {
+    return null;
+  }
+  const parsed = parseExpenseWrite(input);
+  return prisma.expense.update({
+    where: { id },
+    data: { spentAt: parsed.spentAt, amountCents: parsed.amountCents, note: parsed.note },
+    include: expenseInclude,
+  });
+}
+
+export async function deleteExpenseRecord(id: string, userId: string) {
+  try {
+    const user = await resolveUserContext(userId);
+    const result = await prisma.expense.deleteMany({ where: { id, ...editScope(user) } });
+    return result.count > 0;
+  } catch {
+    return false;
+  }
 }

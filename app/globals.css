@@ -910,6 +910,35 @@ th.num {
   border-color: transparent;
 }
 
+.danger-zone {
+  border: 1px solid var(--danger);
+  border-radius: 10px;
+  padding: 1rem 1.2rem;
+  background: var(--danger-soft);
+}
+
+.danger-zone label {
+  display: block;
+  margin-top: 0.6rem;
+}
+
+.remove-member-form {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.remove-member-form .error,
+.remove-member-form .success {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.transfer-form label {
+  display: block;
+  max-width: 22rem;
+}
+
 @media (max-width: 900px) {
   .chart-row {
     grid-template-columns: 1fr;

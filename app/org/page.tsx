@@ -1,10 +1,11 @@
 import { notFound } from "next/navigation";
 import { AddMemberForm } from "@/components/AddMemberForm";
+import { RemoveMemberButton } from "@/components/RemoveMemberButton";
 import { getOrgDetails } from "@/lib/org";
-import { requireUser } from "@/lib/session";
+import { requireVerifiedUser } from "@/lib/session";
 
 export default async function OrgPage() {
-  const user = await requireUser();
+  const user = await requireVerifiedUser();
   if (!user.organizationId) {
     return (
       <main className="main">
@@ -43,6 +44,7 @@ export default async function OrgPage() {
                 <tr>
                   <th>Username</th>
                   <th>Role</th>
+                  {user.isOrgAdmin ? <th>Action</th> : null}
                 </tr>
               </thead>
               <tbody>
@@ -50,6 +52,11 @@ export default async function OrgPage() {
                   <tr key={member.id}>
                     <td>{member.displayName || member.username}</td>
                     <td>{member.id === org.adminId ? "Admin" : "Member"}</td>
+                    {user.isOrgAdmin && member.id !== org.adminId ? (
+                      <td>
+                        <RemoveMemberButton memberId={member.id} />
+                      </td>
+                    ) : null}
                   </tr>
                 ))}
               </tbody>

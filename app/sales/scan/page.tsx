@@ -1,7 +1,7 @@
 import { ScanSaleEntry } from "@/components/ScanSaleEntry";
-import { requireUser } from "@/lib/session";
+import { requireVerifiedUser } from "@/lib/session";
 
 export default async function ScanSalePage() {
-  await requireUser();
+  await requireVerifiedUser();
   return <ScanSaleEntry />;
 }
