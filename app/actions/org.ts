@@ -1,9 +1,18 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import bcrypt from "bcryptjs";
 import { normalizeUsername, validateEmail, validateOrgName, validatePassword, validateUsername } from "@/lib/auth";
-import { addOrgMember, createOrganizationForExistingUser, joinOrganization } from "@/lib/org";
-import { requireUser, requireVerifiedUser } from "@/lib/session";
+import {
+  addOrgMember,
+  createOrganizationForExistingUser,
+  joinOrganization,
+  moveEntriesToOrg,
+  moveEntriesToPersonal,
+} from "@/lib/org";
+import { deleteOrganization } from "@/lib/account-service";
+import { getSession, requireUser, requireVerifiedUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { isMailConfigured, sendMail } from "@/lib/mail";
 import { AUTH_KIND, VERIFY_TTL_MS, consumeAuthToken, createAuthToken } from "@/lib/otp";
@@ -87,9 +96,13 @@ export async function createOrgAction(
   if (user.organizationId) {
     return { error: "You already belong to an organization." };
   }
+  if (user.createdByOrgId) {
+    return { error: "Sub-accounts cannot create organizations." };
+  }
   const orgName = String(formData.get("orgName") ?? "").trim();
   const emailChoice = String(formData.get("emailChoice") ?? "same");
   const newEmail = String(formData.get("orgEmail") ?? "").trim();
+  const migrateExisting = formData.get("migrateExisting") === "on";
 
   const orgNameError = validateOrgName(orgName);
   if (orgNameError) {
@@ -119,6 +132,10 @@ export async function createOrgAction(
     return { error: created.error };
   }
 
+  if (migrateExisting) {
+    await moveEntriesToOrg(user.userId, created.data.orgId);
+  }
+
   if (created.data.emailVerifiedAt === null && isMailConfigured() && orgEmail) {
     try {
       const code = await createAuthToken(user.userId, AUTH_KIND.orgEmailVerification, VERIFY_TTL_MS);
@@ -136,7 +153,10 @@ export async function createOrgAction(
   revalidatePath("/settings");
   const verifiedSuffix =
     created.data.emailVerifiedAt === null ? " Verify its email to add members." : "";
-  return { success: `Organization ${orgName} created.${verifiedSuffix}` };
+  const migratedSuffix = migrateExisting ? " Your existing entries were moved into it." : "";
+  return {
+    success: `Organization ${orgName} created.${verifiedSuffix}${migratedSuffix}`,
+  };
 }
 
 export async function verifyOrgEmailAction(
@@ -227,4 +247,102 @@ export async function joinOrgAction(
   return {
     success: `You joined ${joined.data.name}. Your sales and expenses are now part of the shared ledger.`,
   };
+}
+
+async function setLedgerContext(context: "personal" | "org") {
+  const user = await requireUser();
+  if (context === "personal" && !user.organizationId) {
+    redirect("/sales");
+  }
+  const session = await getSession();
+  session.ledgerContext = context;
+  await session.save();
+  revalidatePath("/sales");
+  redirect("/sales");
+}
+
+export async function setPersonalLedgerAction() {
+  await setLedgerContext("personal");
+}
+
+export async function setOrgLedgerAction() {
+  await setLedgerContext("org");
+}
+
+export async function migrateEntriesAction(
+  _prevState: OrgActionState,
+  formData: FormData,
+): Promise<OrgActionState> {
+  const user = await requireVerifiedUser();
+  const direction = String(formData.get("direction") ?? "");
+  const idsRaw = String(formData.get("ids") ?? "");
+  let ids: string[] = [];
+  if (idsRaw) {
+    try {
+      const parsed = JSON.parse(idsRaw);
+      ids = Array.isArray(parsed) ? parsed.map(String) : [];
+    } catch {
+      return { error: "Entry selection could not be read." };
+    }
+  }
+  if (direction === "to-org") {
+    if (!user.organizationId) {
+      return { error: "You do not belong to an organization." };
+    }
+    await moveEntriesToOrg(user.userId, user.organizationId, ids);
+    revalidatePath("/sales");
+    revalidatePath("/expenses");
+    redirect("/sales");
+  }
+  if (direction === "to-personal") {
+    if (!user.organizationId || !user.isOrgAdmin) {
+      return { error: "Only the organization admin can move entries back to a personal ledger." };
+    }
+    await moveEntriesToPersonal(user.organizationId, user.userId, ids);
+    revalidatePath("/sales");
+    revalidatePath("/expenses");
+    redirect("/sales");
+  }
+  return { error: "Invalid migration direction." };
+}
+
+export async function deleteOrgAction(
+  _prevState: OrgActionState,
+  formData: FormData,
+): Promise<OrgActionState> {
+  const user = await requireUser();
+  const org = await prisma.organization.findUnique({
+    where: { adminId: user.userId },
+    select: { id: true, name: true },
+  });
+  if (!org) {
+    return { error: "You do not own an organization." };
+  }
+  const password = String(formData.get("password") ?? "");
+  if (!password) {
+    return { error: "Enter your current password to confirm." };
+  }
+  const record = await prisma.user.findUnique({
+    where: { id: user.userId },
+    select: { passwordHash: true },
+  });
+  const matches = record && (await bcrypt.compare(password, record.passwordHash));
+  if (!matches) {
+    return { error: "That password is incorrect." };
+  }
+  try {
+    await deleteOrganization(org.id, user.userId);
+  } catch (error) {
+    return {
+      error:
+        error instanceof Error && error.message ? error.message : "Could not delete the organization.",
+    };
+  }
+  const session = await getSession();
+  delete session.ledgerContext;
+  await session.save();
+  revalidatePath("/settings");
+  revalidatePath("/org");
+  revalidatePath("/sales");
+  redirect("/sales");
 }

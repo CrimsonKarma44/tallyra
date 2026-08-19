@@ -58,6 +58,7 @@ export async function addOrgMember(
         email,
         emailVerifiedAt: emailVerifiedAtForNewAccount(),
         organizationId: orgId,
+        createdByOrgId: orgId,
       },
       select: { id: true, username: true },
     });
@@ -145,6 +146,10 @@ export async function createOrganizationForExistingUser(
       },
       select: { id: true },
     });
+    await prisma.user.update({
+      where: { id: adminUserId },
+      data: { organizationId: org.id },
+    });
     return { ok: true, data: { orgId: org.id, emailVerifiedAt } };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
@@ -226,4 +231,58 @@ export async function joinOrganization(
     data: { organizationId: orgId },
   });
   return { ok: true, data: { name: org.name } };
+}
+
+export type MoveResult = { movedSales: number; movedExpenses: number };
+
+/**
+ * Move a user's personal entries (ledgerOrgId null) into an organization's
+ * ledger. When ids is omitted every personal entry is moved.
+ */
+export async function moveEntriesToOrg(
+  userId: string,
+  orgId: string,
+  ids?: string[],
+): Promise<MoveResult> {
+  const saleWhere = {
+    createdById: userId,
+    ledgerOrgId: null,
+    ...(ids && ids.length > 0 ? { id: { in: ids } } : {}),
+  };
+  const expenseWhere = {
+    createdById: userId,
+    ledgerOrgId: null,
+    ...(ids && ids.length > 0 ? { id: { in: ids } } : {}),
+  };
+  const [movedSales, movedExpenses] = await prisma.$transaction([
+    prisma.transaction.updateMany({ where: saleWhere, data: { ledgerOrgId: orgId } }),
+    prisma.expense.updateMany({ where: expenseWhere, data: { ledgerOrgId: orgId } }),
+  ]);
+  return { movedSales: movedSales.count, movedExpenses: movedExpenses.count };
+}
+
+/**
+ * Move a user's own organization entries back into their personal ledger.
+ * Callers must verify the user is the organization's admin.
+ */
+export async function moveEntriesToPersonal(
+  orgId: string,
+  userId: string,
+  ids?: string[],
+): Promise<MoveResult> {
+  const saleWhere = {
+    createdById: userId,
+    ledgerOrgId: orgId,
+    ...(ids && ids.length > 0 ? { id: { in: ids } } : {}),
+  };
+  const expenseWhere = {
+    createdById: userId,
+    ledgerOrgId: orgId,
+    ...(ids && ids.length > 0 ? { id: { in: ids } } : {}),
+  };
+  const [movedSales, movedExpenses] = await prisma.$transaction([
+    prisma.transaction.updateMany({ where: saleWhere, data: { ledgerOrgId: null } }),
+    prisma.expense.updateMany({ where: expenseWhere, data: { ledgerOrgId: null } }),
+  ]);
+  return { movedSales: movedSales.count, movedExpenses: movedExpenses.count };
 }

@@ -168,16 +168,29 @@ export function saleListWhere(params: { q?: string; from?: string; to?: string }
 export type UserContext = {
   id: string;
   organizationId: string | null;
+  activeOrgId: string | null;
   isOrgAdmin: boolean;
 };
 
-export async function resolveUserContext(userId: string): Promise<UserContext> {
+export type LedgerContextOptions = {
+  activeOrgId?: string | null;
+};
+
+export async function resolveUserContext(
+  userId: string,
+  opts?: LedgerContextOptions,
+): Promise<UserContext> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { organizationId: true },
   });
   if (!user?.organizationId) {
-    return { id: userId, organizationId: null, isOrgAdmin: false };
+    return {
+      id: userId,
+      organizationId: null,
+      activeOrgId: opts?.activeOrgId ?? null,
+      isOrgAdmin: false,
+    };
   }
   const org = await prisma.organization.findUnique({
     where: { id: user.organizationId },
@@ -186,26 +199,34 @@ export async function resolveUserContext(userId: string): Promise<UserContext> {
   return {
     id: userId,
     organizationId: user.organizationId,
+    activeOrgId: opts?.activeOrgId === undefined ? user.organizationId : opts.activeOrgId,
     isOrgAdmin: org?.adminId === userId,
   };
 }
 
-export function saleScope(user: Pick<UserContext, "id" | "organizationId">) {
-  return user.organizationId
-    ? { createdBy: { organizationId: user.organizationId } }
-    : { createdById: user.id };
+export function saleScope(user: UserContext) {
+  if (!user.activeOrgId) {
+    return { createdById: user.id, ledgerOrgId: null };
+  }
+  return user.isOrgAdmin
+    ? { ledgerOrgId: user.activeOrgId }
+    : { ledgerOrgId: user.activeOrgId, createdById: user.id };
 }
 
 export function editScope(user: UserContext) {
-  return user.isOrgAdmin ? saleScope(user) : { createdById: user.id };
+  return saleScope(user);
 }
 
 export function saleQueryWhere(user: UserContext, params: { q?: string; from?: string; to?: string }) {
   return { ...saleScope(user), ...saleListWhere(params) };
 }
 
-export async function listSalesRecords(userId: string, params: { q?: string; from?: string; to?: string }) {
-  const user = await resolveUserContext(userId);
+export async function listSalesRecords(
+  userId: string,
+  params: { q?: string; from?: string; to?: string },
+  opts?: LedgerContextOptions,
+) {
+  const user = await resolveUserContext(userId, opts);
   return prisma.transaction.findMany({
     where: saleQueryWhere(user, params),
     include: saleInclude,
@@ -213,15 +234,16 @@ export async function listSalesRecords(userId: string, params: { q?: string; fro
   });
 }
 
-export async function getSaleRecord(id: string, userId: string) {
-  const user = await resolveUserContext(userId);
+export async function getSaleRecord(id: string, userId: string, opts?: LedgerContextOptions) {
+  const user = await resolveUserContext(userId, opts);
   return prisma.transaction.findUnique({
     where: { id, ...saleScope(user) },
     include: saleInclude,
   });
 }
 
-export async function createSaleRecord(userId: string, input: unknown) {
+export async function createSaleRecord(userId: string, input: unknown, opts?: LedgerContextOptions) {
+  const user = await resolveUserContext(userId, opts);
   const parsed = parseSaleWrite(input);
   return prisma.transaction.create({
     data: {
@@ -236,6 +258,7 @@ export async function createSaleRecord(userId: string, input: unknown) {
       taxCents: parsed.totals.taxCents,
       totalCents: parsed.totals.totalCents,
       createdById: userId,
+      ledgerOrgId: user.activeOrgId,
       lines: {
         create: parsed.totals.lines.map((line, index) => ({
           name: line.name,
@@ -250,8 +273,13 @@ export async function createSaleRecord(userId: string, input: unknown) {
   });
 }
 
-export async function updateSaleRecord(id: string, userId: string, input: unknown) {
-  const user = await resolveUserContext(userId);
+export async function updateSaleRecord(
+  id: string,
+  userId: string,
+  input: unknown,
+  opts?: LedgerContextOptions,
+) {
+  const user = await resolveUserContext(userId, opts);
   const existing = await prisma.transaction.findUnique({ where: { id, ...editScope(user) } });
   if (!existing) {
     return null;
@@ -285,9 +313,9 @@ export async function updateSaleRecord(id: string, userId: string, input: unknow
   });
 }
 
-export async function deleteSaleRecord(id: string, userId: string) {
+export async function deleteSaleRecord(id: string, userId: string, opts?: LedgerContextOptions) {
   try {
-    const user = await resolveUserContext(userId);
+    const user = await resolveUserContext(userId, opts);
     const result = await prisma.transaction.deleteMany({ where: { id, ...editScope(user) } });
     return result.count > 0;
   } catch {

@@ -991,6 +991,62 @@ th.num {
   gap: 0.4rem;
 }
 
+.ledger-switch {
+  display: inline-flex;
+  gap: 0.25rem;
+  background: #23272e;
+  border-radius: 999px;
+  padding: 0.2rem;
+}
+
+.ledger-switch form {
+  margin: 0;
+}
+
+.ledger-pill {
+  border: 1px solid transparent;
+  background: transparent;
+  color: #c8c1b5;
+  border-radius: 999px;
+  padding: 0.25rem 0.8rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.ledger-pill:hover {
+  color: #fff;
+}
+
+.ledger-pill-active {
+  background: #f7f2ea;
+  color: #1a1d23;
+}
+
+.ledger-pill-active:hover {
+  color: #1a1d23;
+}
+
+.migrate-controls {
+  margin: 0 0 1rem;
+}
+
+.migrate-controls .error {
+  margin: 0 0 0.5rem;
+}
+
+.migrate-controls .btn-row {
+  margin: 0;
+}
+
+.checkbox-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.85rem;
+}
+
 @media (max-width: 900px) {
   .chart-row {
     grid-template-columns: 1fr;

@@ -19,6 +19,7 @@ model User {
   avatarUpdatedAt DateTime?
   organizationId  String?
   organization    Organization? @relation("OrgMember", fields: [organizationId], references: [id])
+  createdByOrgId  String?
   orgAdminOf      Organization? @relation("OrgAdmin")
   createdAt       DateTime      @default(now())
   sales           Transaction[]
@@ -55,6 +56,7 @@ model Transaction {
   receiverAccount  String?
   receiverContact  String?
   receiverAddress  String?
+  ledgerOrgId      String?
   lines            TransactionLine[]
 }
 
@@ -67,6 +69,7 @@ model Expense {
   note        String   @default("")
   createdById String
   createdBy   User     @relation(fields: [createdById], references: [id])
+  ledgerOrgId String?
 }
 
 model AuthToken {

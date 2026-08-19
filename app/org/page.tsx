@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { AddMemberForm } from "@/components/AddMemberForm";
+import { DeleteOrgForm } from "@/components/DeleteOrgForm";
 import { OrgEmailVerifyForm } from "@/components/OrgEmailVerifyForm";
 import { RemoveMemberButton } from "@/components/RemoveMemberButton";
 import { getOrgDetails } from "@/lib/org";
@@ -110,8 +111,18 @@ export default async function OrgPage() {
             <hr className="settings-divider" />
             <section className="settings-section">
               <h2>Add member</h2>
-              <p className="muted">Create an account that shares this organization&apos;s ledger.</p>
+              <p className="muted">Create a member account for this organization.</p>
               <AddMemberForm />
+            </section>
+          </>
+        ) : null}
+
+        {user.isOrgAdmin ? (
+          <>
+            <hr className="settings-divider" />
+            <section className="settings-section">
+              <h2>Delete organization</h2>
+              <DeleteOrgForm />
             </section>
           </>
         ) : null}

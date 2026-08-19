@@ -5,6 +5,7 @@ export const SESSION_COOKIE = "pos_session";
 export type SessionData = {
   userId?: string;
   username?: string;
+  ledgerContext?: "personal" | "org";
 };
 
 export function getSessionOptions(): SessionOptions {

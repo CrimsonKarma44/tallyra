@@ -4,6 +4,7 @@ import { formatCents, formatSoldAt } from "@/lib/money";
 import { requireVerifiedUser } from "@/lib/session";
 import { getAnalytics } from "@/lib/analytics";
 import { RevenueChart } from "@/components/RevenueChart";
+import { MigrateControls } from "@/components/MigrateControls";
 
 export default async function SalesPage({
   searchParams,
@@ -12,12 +13,30 @@ export default async function SalesPage({
 }) {
   const { q = "", from = "", to = "" } = await searchParams;
   const user = await requireVerifiedUser();
+  const context = {
+    id: user.userId,
+    organizationId: user.organizationId,
+    activeOrgId: user.activeOrgId,
+    isOrgAdmin: user.isOrgAdmin,
+  };
   const [sales, analytics] = await Promise.all([
     listSales({ q, from, to }),
-    getAnalytics({ id: user.userId, organizationId: user.organizationId }, { from, to }),
+    getAnalytics(context, { from, to }),
   ]);
   const { totals } = analytics;
   const hasActivity = totals.saleCount + totals.expenseCount > 0;
+  const showAgent = Boolean(user.activeOrgId && user.isOrgAdmin);
+  const migrateTarget = user.organizationId
+    ? user.activeOrgId
+      ? user.isOrgAdmin
+        ? { direction: "to-personal" as const, targetLabel: "your personal ledger" }
+        : null
+      : { direction: "to-org" as const, targetLabel: "the organization" }
+    : null;
+  const migrateCount =
+    migrateTarget?.direction === "to-personal"
+      ? sales.filter((sale) => sale.createdBy.id === user.userId).length
+      : sales.length;
 
   return (
     <main className="main">
@@ -175,6 +194,14 @@ export default async function SalesPage({
         </button>
       </form>
 
+      {migrateTarget && migrateCount > 0 ? (
+        <MigrateControls
+          direction={migrateTarget.direction}
+          targetLabel={migrateTarget.targetLabel}
+          count={migrateCount}
+        />
+      ) : null}
+
       {sales.length === 0 ? (
         <div className="card empty">
           <p>
@@ -191,9 +218,10 @@ export default async function SalesPage({
           <table>
             <thead>
               <tr>
+                {migrateTarget ? <th></th> : null}
                 <th>Sold at</th>
                 <th>Receiver</th>
-                <th>Agent</th>
+                {showAgent ? <th>Agent</th> : null}
                 <th>Items</th>
                 <th>Note</th>
                 <th className="num">Total</th>
@@ -202,13 +230,26 @@ export default async function SalesPage({
             <tbody>
               {sales.map((sale) => (
                 <tr key={sale.id}>
+                  {migrateTarget ? (
+                    <td>
+                      <input
+                        type="checkbox"
+                        name="entryId"
+                        value={sale.id}
+                        disabled={
+                          migrateTarget.direction === "to-personal" &&
+                          sale.createdBy.id !== user.userId
+                        }
+                      />
+                    </td>
+                  ) : null}
                   <td>
                     <Link className="row-link" href={`/sales/${sale.id}`}>
                       {formatSoldAt(sale.soldAt)}
                     </Link>
                   </td>
                   <td>{sale.receiverName || "—"}</td>
-                  <td>{sale.createdBy.username}</td>
+                  {showAgent ? <td>{sale.createdBy.username}</td> : null}
                   <td>{sale.lines.length}</td>
                   <td>{sale.note || "—"}</td>
                   <td className="num">{formatCents(sale.totalCents)}</td>

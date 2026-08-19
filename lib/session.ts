@@ -15,7 +15,10 @@ export type CurrentUser = {
   userId: string;
   username: string;
   organizationId: string | null;
+  createdByOrgId: string | null;
   isOrgAdmin: boolean;
+  ledgerContext: "personal" | "org";
+  activeOrgId: string | null;
   emailVerifiedAt: Date | null;
 };
 
@@ -26,7 +29,11 @@ export async function requireUser(): Promise<CurrentUser> {
   }
   const user = await prisma.user.findUnique({
     where: { id: session.userId },
-    select: { organizationId: true, emailVerifiedAt: true },
+    select: {
+      organizationId: true,
+      createdByOrgId: true,
+      emailVerifiedAt: true,
+    },
   });
   if (!user) {
     redirect("/login");
@@ -39,11 +46,16 @@ export async function requireUser(): Promise<CurrentUser> {
     });
     isOrgAdmin = org?.adminId === session.userId;
   }
+  const ledgerContext: "personal" | "org" =
+    session.ledgerContext === "personal" ? "personal" : "org";
   return {
     userId: session.userId,
     username: session.username,
     organizationId: user.organizationId,
+    createdByOrgId: user.createdByOrgId,
     isOrgAdmin,
+    ledgerContext,
+    activeOrgId: ledgerContext === "personal" ? null : user.organizationId,
     emailVerifiedAt: user.emailVerifiedAt,
   };
 }

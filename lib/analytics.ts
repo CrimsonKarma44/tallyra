@@ -174,7 +174,7 @@ export function aggregateAnalytics(
 }
 
 export async function getAnalytics(
-  user: Pick<UserContext, "id" | "organizationId">,
+  user: UserContext,
   params: { from?: string; to?: string },
 ): Promise<Analytics> {
   const [sales, expenses] = await Promise.all([
@@ -200,7 +200,7 @@ export async function getAnalytics(
     }),
   ]);
   return aggregateAnalytics(sales, expenses, {
-    organizationId: user.organizationId,
+    organizationId: user.activeOrgId,
     dayKeys: buildDayRange(params.from, params.to),
   });
 }

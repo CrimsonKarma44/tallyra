@@ -47,6 +47,15 @@ export default async function SettingsPage() {
   const userEmail = record?.email ?? null;
   const organizations = await getUserOrganizations(user.userId, userEmail, user.organizationId);
 
+  const associatedAccounts =
+    !user.organizationId && userEmail
+      ? await prisma.user.findMany({
+          where: { email: userEmail, organizationId: { not: null } },
+          select: { username: true, organization: { select: { name: true } } },
+          orderBy: { createdAt: "asc" },
+        })
+      : [];
+
   return (
     <main className="main settings-page">
       <div className="sale-card">
@@ -90,14 +99,14 @@ export default async function SettingsPage() {
           <PasswordForm action={changePasswordAction} />
         </section>
 
-        {!user.organizationId ? (
+        {!user.organizationId && !user.createdByOrgId ? (
           <>
             <hr className="settings-divider" />
             <section className="settings-section">
               <h2>Create an organization</h2>
               <p className="muted">
-                Turn your personal ledger into a shared team ledger. You stay on your
-                personal ledger until you join the new organization.
+                Turn your personal ledger into a shared team ledger. You join the new
+                organization right away and can switch views from the top bar.
               </p>
               <CreateOrgForm userEmail={userEmail} />
             </section>
@@ -154,6 +163,29 @@ export default async function SettingsPage() {
                 then delete your account.
               </p>
               <TransferAdminForm currentUserId={user.userId} members={org?.members ?? []} />
+            </section>
+          </>
+        ) : null}
+
+        {associatedAccounts.length > 0 ? (
+          <>
+            <hr className="settings-divider" />
+            <section className="settings-section">
+              <h2>Associated accounts</h2>
+              <p className="muted">
+                Organization accounts that use your email. Sign in with that account to
+                record entries for the organization.
+              </p>
+              <div className="org-list">
+                {associatedAccounts.map((account, index) => (
+                  <div className="org-item" key={`${account.username}-${index}`}>
+                    <div className="org-item-main">
+                      <strong>{account.username}</strong>
+                      <span className="muted">{account.organization?.name ?? "Unknown organization"}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </section>
           </>
         ) : null}

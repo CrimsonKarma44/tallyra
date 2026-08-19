@@ -14,9 +14,15 @@ export type SaleActionState = { error?: string } | null;
 function userContext(user: {
   userId: string;
   organizationId: string | null;
+  activeOrgId: string | null;
   isOrgAdmin: boolean;
 }): UserContext {
-  return { id: user.userId, organizationId: user.organizationId, isOrgAdmin: user.isOrgAdmin };
+  return {
+    id: user.userId,
+    organizationId: user.organizationId,
+    activeOrgId: user.activeOrgId,
+    isOrgAdmin: user.isOrgAdmin,
+  };
 }
 
 const lineSchema = z.object({
@@ -108,6 +114,7 @@ export async function createSale(
         taxCents: totals.taxCents,
         totalCents: totals.totalCents,
         createdById: user.userId,
+        ledgerOrgId: user.activeOrgId,
         lines: {
           create: totals.lines.map((line, index) => ({
             name: line.name,
@@ -205,7 +212,7 @@ export async function listSales(params: { q?: string; from?: string; to?: string
   return prisma.transaction.findMany({
     where: saleQueryWhere(userContext(user), params),
     include: {
-      createdBy: { select: { username: true } },
+      createdBy: { select: { id: true, username: true } },
       lines: { select: { id: true } },
     },
     orderBy: { soldAt: "desc" },

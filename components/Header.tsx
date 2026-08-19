@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { logoutAction } from "@/app/actions/auth";
+import { LedgerSwitch } from "@/components/LedgerSwitch";
 
 type HeaderUser = {
   username: string;
@@ -8,12 +9,17 @@ type HeaderUser = {
   avatarUpdatedAt: Date | null;
   organizationId: string | null;
   organizationName: string | null;
+  ledgerContext: "personal" | "org";
+  isOrgAdmin: boolean;
 };
 
 export function Header({ user }: { user?: HeaderUser | null }) {
   const avatarVersion = user?.avatarUpdatedAt?.getTime();
   const label = user?.displayName?.trim() || user?.username || "";
   const initial = label.charAt(0).toUpperCase();
+  const showLedgerSwitch = Boolean(
+    user?.organizationName && user.isOrgAdmin,
+  );
 
   return (
     <header className="site-header">
@@ -23,6 +29,12 @@ export function Header({ user }: { user?: HeaderUser | null }) {
       </Link>
       {user ? (
         <div className="header-user">
+          {showLedgerSwitch ? (
+            <LedgerSwitch
+              orgName={user.organizationName!}
+              activeContext={user.ledgerContext}
+            />
+          ) : null}
           <Link className="user-chip" href="/settings">
             {avatarVersion ? (
               <Image

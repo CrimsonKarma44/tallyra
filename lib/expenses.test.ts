@@ -64,10 +64,10 @@ describe("serializeExpense", () => {
 });
 
 describe("expenseListWhere", () => {
-  const solo = { id: "user-1", organizationId: null };
+  const solo = { id: "user-1", organizationId: null, activeOrgId: null, isOrgAdmin: false };
 
-  it("scopes a solo user to their own expenses", () => {
-    expect(expenseListWhere(solo, {})).toEqual({ createdById: "user-1" });
+  it("scopes a solo user to their own personal ledger", () => {
+    expect(expenseListWhere(solo, {})).toEqual({ createdById: "user-1", ledgerOrgId: null });
   });
 
   it("adds a date filter when given", () => {

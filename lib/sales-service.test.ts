@@ -8,43 +8,69 @@ import {
   type UserContext,
 } from "./sales-service";
 
-const solo: UserContext = { id: "user-123", organizationId: null, isOrgAdmin: false };
-const member: UserContext = { id: "user-123", organizationId: "org-1", isOrgAdmin: false };
-const admin: UserContext = { id: "user-123", organizationId: "org-1", isOrgAdmin: true };
+const solo: UserContext = { id: "user-123", organizationId: null, activeOrgId: null, isOrgAdmin: false };
+const member: UserContext = {
+  id: "user-123",
+  organizationId: "org-1",
+  activeOrgId: "org-1",
+  isOrgAdmin: false,
+};
+const admin: UserContext = {
+  id: "user-123",
+  organizationId: "org-1",
+  activeOrgId: "org-1",
+  isOrgAdmin: true,
+};
+const memberPersonal: UserContext = {
+  id: "user-123",
+  organizationId: "org-1",
+  activeOrgId: null,
+  isOrgAdmin: false,
+};
 
 describe("saleScope", () => {
-  it("scopes a solo user to their own sales", () => {
-    expect(saleScope(solo)).toEqual({ createdById: "user-123" });
+  it("scopes a solo user to their own personal ledger", () => {
+    expect(saleScope(solo)).toEqual({ createdById: "user-123", ledgerOrgId: null });
   });
 
-  it("scopes an organization member to the whole org ledger", () => {
-    expect(saleScope(member)).toEqual({ createdBy: { organizationId: "org-1" } });
+  it("scopes a member in personal context to their own personal ledger", () => {
+    expect(saleScope(memberPersonal)).toEqual({ createdById: "user-123", ledgerOrgId: null });
+  });
+
+  it("scopes a non-admin member to only their own org entries", () => {
+    expect(saleScope(member)).toEqual({ ledgerOrgId: "org-1", createdById: "user-123" });
+  });
+
+  it("scopes an admin to the whole org ledger", () => {
+    expect(saleScope(admin)).toEqual({ ledgerOrgId: "org-1" });
   });
 });
 
 describe("editScope", () => {
   it("lets a solo user edit only their own sales", () => {
-    expect(editScope(solo)).toEqual({ createdById: "user-123" });
+    expect(editScope(solo)).toEqual({ createdById: "user-123", ledgerOrgId: null });
   });
 
-  it("restricts a non-admin member to their own sales", () => {
-    expect(editScope(member)).toEqual({ createdById: "user-123" });
+  it("restricts a non-admin member to their own org sales", () => {
+    expect(editScope(member)).toEqual({ ledgerOrgId: "org-1", createdById: "user-123" });
   });
 
   it("lets an admin edit any sale in the org", () => {
-    expect(editScope(admin)).toEqual({ createdBy: { organizationId: "org-1" } });
+    expect(editScope(admin)).toEqual({ ledgerOrgId: "org-1" });
   });
 });
 
 describe("saleQueryWhere", () => {
-  it("scopes results to the signed-in user", () => {
+  it("scopes results to the signed-in user's personal ledger", () => {
     const where = saleQueryWhere(solo, {});
     expect(where.createdById).toBe("user-123");
+    expect(where.ledgerOrgId).toBeNull();
   });
 
-  it("scopes results to the org ledger for a member", () => {
+  it("scopes a member to their own org entries", () => {
     const where = saleQueryWhere(member, {});
-    expect(where.createdBy).toEqual({ organizationId: "org-1" });
+    expect(where.ledgerOrgId).toBe("org-1");
+    expect(where.createdById).toBe("user-123");
   });
 
   it("merges search and date filters on top of the owner scope", () => {

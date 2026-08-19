@@ -3,11 +3,25 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { editScope } from "@/lib/sales-service";
 import { requireVerifiedUser } from "@/lib/session";
 import { ExpenseValidationError, expenseListWhere, parseExpenseWrite } from "@/lib/expenses";
+import { editScope, type UserContext } from "@/lib/sales-service";
 
 export type ExpenseActionState = { error?: string } | null;
+
+function userContext(user: {
+  userId: string;
+  organizationId: string | null;
+  activeOrgId: string | null;
+  isOrgAdmin: boolean;
+}): UserContext {
+  return {
+    id: user.userId,
+    organizationId: user.organizationId,
+    activeOrgId: user.activeOrgId,
+    isOrgAdmin: user.isOrgAdmin,
+  };
+}
 
 export async function createExpense(
   prevState: ExpenseActionState,
@@ -21,7 +35,7 @@ export async function createExpense(
       note: String(formData.get("note") ?? ""),
     });
     await prisma.expense.create({
-      data: { spentAt, amountCents, note, createdById: user.userId },
+      data: { spentAt, amountCents, note, createdById: user.userId, ledgerOrgId: user.activeOrgId },
     });
   } catch (error) {
     if (error instanceof ExpenseValidationError) {
@@ -44,7 +58,7 @@ export async function deleteExpense(formData: FormData) {
     return;
   }
   await prisma.expense.deleteMany({
-    where: { id, ...editScope({ id: user.userId, organizationId: user.organizationId, isOrgAdmin: user.isOrgAdmin }) },
+    where: { id, ...editScope(userContext(user)) },
   });
   revalidatePath("/expenses");
   revalidatePath("/sales");
@@ -54,11 +68,8 @@ export async function deleteExpense(formData: FormData) {
 export async function listExpenses(params: { from?: string; to?: string }) {
   const user = await requireVerifiedUser();
   return prisma.expense.findMany({
-    where: expenseListWhere(
-      { id: user.userId, organizationId: user.organizationId },
-      params,
-    ),
-    include: { createdBy: { select: { username: true } } },
+    where: expenseListWhere(userContext(user), params),
+    include: { createdBy: { select: { id: true, username: true } } },
     orderBy: { spentAt: "desc" },
   });
 }

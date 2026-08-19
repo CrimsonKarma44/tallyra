@@ -55,9 +55,13 @@ export function CreateOrgForm({ userEmail }: { userEmail: string | null }) {
           </label>
         ) : null}
       </fieldset>
+      <label className="checkbox-row">
+        <input type="checkbox" name="migrateExisting" value="on" />
+        <span>Move my existing sales and expenses into the organization</span>
+      </label>
       <p className="muted">
-        Your existing sales and expenses stay on your personal ledger until you join
-        the organization from the list below.
+        You join the organization right away. You can switch between your personal and
+        organization views from the top bar, and move entries between them at any time.
       </p>
       <div className="btn-row">
         <button className="btn" type="submit" disabled={pending}>

@@ -4,6 +4,7 @@ import { requireVerifiedUser } from "@/lib/session";
 import { formatCents, formatSoldAt } from "@/lib/money";
 import { ExpenseForm } from "@/components/ExpenseForm";
 import { DeleteExpenseButton } from "@/components/DeleteExpenseButton";
+import { MigrateControls } from "@/components/MigrateControls";
 
 export default async function ExpensesPage({
   searchParams,
@@ -14,6 +15,18 @@ export default async function ExpensesPage({
   const user = await requireVerifiedUser();
   const expenses = await listExpenses({ from, to });
   const totalCents = expenses.reduce((sum, expense) => sum + expense.amountCents, 0);
+  const showAgent = Boolean(user.activeOrgId && user.isOrgAdmin);
+  const migrateTarget = user.organizationId
+    ? user.activeOrgId
+      ? user.isOrgAdmin
+        ? { direction: "to-personal" as const, targetLabel: "your personal ledger" }
+        : null
+      : { direction: "to-org" as const, targetLabel: "the organization" }
+    : null;
+  const migrateCount =
+    migrateTarget?.direction === "to-personal"
+      ? expenses.filter((expense) => expense.createdBy.id === user.userId).length
+      : expenses.length;
 
   return (
     <main className="main">
@@ -32,6 +45,13 @@ export default async function ExpensesPage({
       <div className="expenses-layout">
         <ExpenseForm />
 
+        {migrateTarget && migrateCount > 0 ? (
+          <MigrateControls
+            direction={migrateTarget.direction}
+            targetLabel={migrateTarget.targetLabel}
+            count={migrateCount}
+          />
+        ) : null}
         <section className="card expenses-list">
           <div className="card-head">
             <h2>
@@ -45,9 +65,10 @@ export default async function ExpensesPage({
             <table>
               <thead>
                 <tr>
+                  {migrateTarget ? <th></th> : null}
                   <th>Date</th>
                   <th>Note</th>
-                  {user.organizationId ? <th>Agent</th> : null}
+                  {showAgent ? <th>Agent</th> : null}
                   <th className="num">Amount</th>
                   <th></th>
                 </tr>
@@ -55,9 +76,22 @@ export default async function ExpensesPage({
               <tbody>
                 {expenses.map((expense) => (
                   <tr key={expense.id}>
+                    {migrateTarget ? (
+                      <td>
+                        <input
+                          type="checkbox"
+                          name="entryId"
+                          value={expense.id}
+                          disabled={
+                            migrateTarget.direction === "to-personal" &&
+                            expense.createdBy.id !== user.userId
+                          }
+                        />
+                      </td>
+                    ) : null}
                     <td>{formatSoldAt(expense.spentAt)}</td>
                     <td>{expense.note || "—"}</td>
-                    {user.organizationId ? <td>{expense.createdBy.username}</td> : null}
+                    {showAgent ? <td>{expense.createdBy.username}</td> : null}
                     <td className="num">{formatCents(expense.amountCents)}</td>
                     <td className="actions-cell">
                       <DeleteExpenseButton id={expense.id} />

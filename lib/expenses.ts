@@ -4,6 +4,7 @@ import {
   editScope,
   resolveUserContext,
   saleScope,
+  type LedgerContextOptions,
   type UserContext,
 } from "@/lib/sales-service";
 import { prisma } from "@/lib/prisma";
@@ -47,7 +48,7 @@ export function parseExpenseWrite(input: unknown) {
 }
 
 export function expenseListWhere(
-  user: Pick<UserContext, "id" | "organizationId">,
+  user: UserContext,
   params: { from?: string; to?: string },
 ) {
   const where: {
@@ -92,8 +93,12 @@ export function serializeExpense(
   };
 }
 
-export async function listExpensesRecords(userId: string, params: { from?: string; to?: string }) {
-  const user = await resolveUserContext(userId);
+export async function listExpensesRecords(
+  userId: string,
+  params: { from?: string; to?: string },
+  opts?: LedgerContextOptions,
+) {
+  const user = await resolveUserContext(userId, opts);
   return prisma.expense.findMany({
     where: expenseListWhere(user, params),
     include: expenseInclude,
@@ -101,15 +106,20 @@ export async function listExpensesRecords(userId: string, params: { from?: strin
   });
 }
 
-export async function getExpenseRecord(id: string, userId: string) {
-  const user = await resolveUserContext(userId);
+export async function getExpenseRecord(id: string, userId: string, opts?: LedgerContextOptions) {
+  const user = await resolveUserContext(userId, opts);
   return prisma.expense.findUnique({
     where: { id, ...saleScope(user) },
     include: expenseInclude,
   });
 }
 
-export async function createExpenseRecord(userId: string, input: unknown) {
+export async function createExpenseRecord(
+  userId: string,
+  input: unknown,
+  opts?: LedgerContextOptions,
+) {
+  const user = await resolveUserContext(userId, opts);
   const parsed = parseExpenseWrite(input);
   return prisma.expense.create({
     data: {
@@ -117,13 +127,19 @@ export async function createExpenseRecord(userId: string, input: unknown) {
       amountCents: parsed.amountCents,
       note: parsed.note,
       createdById: userId,
+      ledgerOrgId: user.activeOrgId,
     },
     include: expenseInclude,
   });
 }
 
-export async function updateExpenseRecord(id: string, userId: string, input: unknown) {
-  const user = await resolveUserContext(userId);
+export async function updateExpenseRecord(
+  id: string,
+  userId: string,
+  input: unknown,
+  opts?: LedgerContextOptions,
+) {
+  const user = await resolveUserContext(userId, opts);
   const existing = await prisma.expense.findUnique({ where: { id, ...editScope(user) } });
   if (!existing) {
     return null;
@@ -136,9 +152,13 @@ export async function updateExpenseRecord(id: string, userId: string, input: unk
   });
 }
 
-export async function deleteExpenseRecord(id: string, userId: string) {
+export async function deleteExpenseRecord(
+  id: string,
+  userId: string,
+  opts?: LedgerContextOptions,
+) {
   try {
-    const user = await resolveUserContext(userId);
+    const user = await resolveUserContext(userId, opts);
     const result = await prisma.expense.deleteMany({ where: { id, ...editScope(user) } });
     return result.count > 0;
   } catch {

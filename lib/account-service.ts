@@ -89,3 +89,47 @@ export async function deleteOrgWithAdmin(orgId: string, adminId: string) {
     await tx.user.delete({ where: { id: adminId } });
   });
 }
+
+/**
+ * Delete an organization while keeping the admin's account. Every member's
+ * sales and expenses are reassigned to the admin's personal ledger, then the
+ * member accounts are deleted; the admin's own organization entries become
+ * personal too. The admin becomes a personal account again.
+ */
+export async function deleteOrganization(orgId: string, adminId: string) {
+  await prisma.$transaction(async (tx) => {
+    const org = await tx.organization.findUnique({
+      where: { id: orgId },
+      select: { adminId: true, members: { select: { id: true } } },
+    });
+    if (!org) {
+      throw new Error("Organization not found.");
+    }
+    if (org.adminId !== adminId) {
+      throw new Error("Only the organization admin can delete it.");
+    }
+    const memberIds = org.members.filter((m) => m.id !== adminId).map((m) => m.id);
+    for (const memberId of memberIds) {
+      await tx.transaction.updateMany({
+        where: { createdById: memberId },
+        data: { createdById: adminId, ledgerOrgId: null },
+      });
+      await tx.expense.updateMany({
+        where: { createdById: memberId },
+        data: { createdById: adminId, ledgerOrgId: null },
+      });
+      await tx.authToken.deleteMany({ where: { userId: memberId } });
+      await tx.user.delete({ where: { id: memberId } });
+    }
+    await tx.transaction.updateMany({
+      where: { createdById: adminId, ledgerOrgId: orgId },
+      data: { ledgerOrgId: null },
+    });
+    await tx.expense.updateMany({
+      where: { createdById: adminId, ledgerOrgId: orgId },
+      data: { ledgerOrgId: null },
+    });
+    await tx.user.update({ where: { id: adminId }, data: { organizationId: null } });
+    await tx.organization.delete({ where: { id: orgId } });
+  });
+}
