@@ -89,14 +89,16 @@ A personal account can create an organization from `/settings` → **Create an o
 | `APP_CURRENCY` | Display currency, default `PHP` |
 | `GEMINI_API_KEY` | Gemini key for receipt scan. Optional; manual entry works without it |
 | `GEMINI_MODEL` | Vision model, default `gemini-3.7-flash` |
-| `SMTP_HOST` / `SMTP_USER` / `SMTP_PASS` | SMTP for reset/verification/alert emails. Unset → accounts auto-verified, no emails |
+| `BREVO_API_KEY` | Brevo HTTPS email API key (preferred; works where SMTP ports are blocked, e.g. Render free tier). Takes precedence over SMTP |
+| `MAIL_FROM` | Sender as `"Name <email>"`; the email must be verified in Brevo. Defaults to `SMTP_FROM`/`SMTP_USER` |
+| `SMTP_HOST` / `SMTP_USER` / `SMTP_PASS` | SMTP fallback for reset/verification/alert emails. Unset → accounts auto-verified, no emails |
 | `SMTP_PORT` | Default `587` (STARTTLS) |
 | `SMTP_SECURE` | `false` for STARTTLS, `true` for implicit TLS (465) |
 | `SMTP_FROM` | Sender address; defaults to `SMTP_USER` |
 
-SMTP connections prefer IPv4 resolution, so email works on IPv4-only hosts (e.g. Render) where IPv6 routes are unavailable.
+Email is sent over **Brevo's HTTPS API** when `BREVO_API_KEY` is set (port 443, so it works on hosts that block SMTP egress like Render's free tier); otherwise it falls back to SMTP (which prefers IPv4 resolution).
 
-When SMTP is configured, a 6-digit code is emailed and accounts show a "verify your email" banner until confirmed (`/verify-email`, code valid 60 min). Organization accounts are **blocked from the ledger** until verified; personal accounts are not blocked but lose password recovery until verified. Organizations created with a **new email** send their own code to that address (verified from Settings → Your organizations or `/org`); until it's confirmed the admin can't add members and no alerts are sent. Forgot-password flow: `/forgot-password` → 6-digit reset code (valid 15 min, single-use, max 5 attempts) → enter the code and a new password inline on the same page (or `/reset-password?username=…`). Org admins also get alerts when a member is added or signs in. When SMTP is unset, every account is auto-verified and no emails are sent.
+When email is configured, a 6-digit code is emailed and accounts show a "verify your email" banner until confirmed (`/verify-email`, code valid 60 min). Organization accounts are **blocked from the ledger** until verified; personal accounts are not blocked but lose password recovery until verified. Organizations created with a **new email** send their own code to that address (verified from Settings → Your organizations or `/org`); until it's confirmed the admin can't add members and no alerts are sent. Forgot-password flow: `/forgot-password` → 6-digit reset code (valid 15 min, single-use, max 5 attempts) → enter the code and a new password inline on the same page (or `/reset-password?username=…`). Org admins also get alerts when a member is added or signs in. When no email transport is configured, every account is auto-verified and no emails are sent.
 
 ## Docker
 
