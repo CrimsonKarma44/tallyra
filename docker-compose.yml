@@ -1,6 +1,8 @@
 services:
   app:
+    image: ghcr.io/crimsonkarma44/capstone-project-pos:latest
     build: .
+    restart: unless-stopped
     ports:
       - "3000:3000"
     env_file:

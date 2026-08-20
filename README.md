@@ -38,7 +38,7 @@ This is the SD-01 capstone MVP: **CRUD**, **totals**, **simple auth**, **HTTP AP
 - Next.js 15 (App Router) + TypeScript
 - Prisma + SQLite
 - iron-session cookie auth
-- Docker Compose for one-command deploy
+- Docker image on GitHub Container Registry, rebuilt by CI on every push
 
 ## Quick start (local)
 
@@ -98,16 +98,53 @@ When SMTP is configured, a 6-digit code is emailed and accounts show a "verify y
 
 ## Docker
 
+Requires Docker Engine 20.10+ with Docker Compose v2.
+
+### Quick start (Compose)
+
 ```bash
-cp .env.example .env
-docker compose up --build
+cp .env.example .env   # set SESSION_SECRET (32+ chars) and AUTH_PASSWORD first
+docker compose up -d --build
 ```
 
-The app listens on [http://localhost:3000](http://localhost:3000). Sales persist in the `pos-data` volume at `/data/pos.db`.
+The app listens on [http://localhost:3000](http://localhost:3000). On first boot the container runs the database migrations (`prisma migrate deploy`) and seeds the `agent` login, then starts the server. Sales persist in the `pos-data` volume at `/data/pos.db`; `docker compose down` keeps the data, `docker compose down -v` deletes it.
+
+### Run the image directly
+
+The image is published to GitHub Container Registry on every push to GitHub (`latest` updates on `main`):
+
+```bash
+docker run -d --name ledger-pos -p 3000:3000 \
+  -v pos-data:/data \
+  -e DATABASE_URL=file:/data/pos.db \
+  -e AUTH_USERNAME=agent \
+  -e AUTH_PASSWORD=changeme \
+  -e SESSION_SECRET=change-this-to-a-long-random-string-32ch \
+  ghcr.io/crimsonkarma44/capstone-project-pos:latest
+```
+
+A healthcheck is built into the image (probes `/login`), so `docker ps` reports container health without extra setup.
+
+### Build and publish
+
+CI (`.github/workflows/docker-image.yml`) rebuilds and pushes the image on **every push to GitHub** — every push gets a `sha-<short>` tag, and `latest` is updated on `main`. Pull requests run the test suite (`npm run verify`) and build the image but do not push.
+
+To publish manually from your machine, log in and run the helper:
+
+```bash
+docker login ghcr.io --username CrimsonKarma44   # use a PAT with packages:write
+./scripts/docker-push.sh                          # or: ./scripts/docker-push.sh <tag>
+```
+
+To build and smoke-test the image locally (throwaway container + volume, then cleanup):
+
+```bash
+sudo ./scripts/docker-smoke.sh
+```
 
 ## Optional public host
 
-Use the same Dockerfile on Railway, Render, or Fly. Attach a persistent disk at `/data` and set:
+Use the same image on Railway, Render, or Fly. Attach a persistent disk at `/data` and set:
 
 ```
 DATABASE_URL=file:/data/pos.db
