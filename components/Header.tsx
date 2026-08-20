@@ -24,8 +24,36 @@ export function Header({ user }: { user?: HeaderUser | null }) {
   return (
     <header className="site-header">
       <Link className="brand" href={user ? "/sales" : "/"}>
-        <span className="brand-mark">Ledger</span>
-        <span className="brand-sub">POS transaction book</span>
+        <svg
+          className="brand-logo"
+          viewBox="0 0 24 24"
+          width="22"
+          height="22"
+          aria-hidden="true"
+        >
+          <rect width="24" height="24" rx="6" fill="#1b8a78" />
+          <g
+            stroke="#f3eee4"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            transform="translate(6 5.5)"
+          >
+            <line x1="0" y1="0" x2="0" y2="12" />
+            <line x1="4" y1="0" x2="4" y2="12" />
+            <line x1="8" y1="0" x2="8" y2="12" />
+            <line x1="12" y1="0" x2="12" y2="12" />
+          </g>
+          <line
+            x1="8.5"
+            y1="15"
+            x2="15.5"
+            y2="9"
+            stroke="#57d0bc"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+        </svg>
+        <span className="brand-mark">Tallyra</span>
       </Link>
       {user ? (
         <div className="header-user">

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build, tag, and push the Ledger POS image to GitHub Container Registry.
+# Build, tag, and push the Tallyra POS image to GitHub Container Registry.
 # Usage: ./scripts/docker-push.sh [tag]
 #   tag defaults to "latest". Requires `docker login ghcr.io` first.
 set -euo pipefail

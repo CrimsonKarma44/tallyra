@@ -1,4 +1,4 @@
-const APP_NAME = "Ledger — POS Transaction Book";
+const APP_NAME = "Tallyra — POS Transaction Book";
 
 function emailLayout(title: string, bodyHtml: string): string {
   return `<!doctype html>
@@ -40,7 +40,7 @@ function otpBlock(code: string, minutes: number): string {
 }
 
 export function passwordResetEmail(opts: { username: string; code: string; expiresInMinutes: number }) {
-  const subject = "Reset your Ledger password";
+  const subject = "Reset your Tallyra password";
   const text = `Hi ${opts.username},\n\nYour password reset code is ${opts.code}. It expires in ${opts.expiresInMinutes} minutes and can only be used once.\n\nIf you didn't request this, you can ignore this email.`;
   const html = emailLayout(
     subject,

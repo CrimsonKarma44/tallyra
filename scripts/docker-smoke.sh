@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds the Ledger POS image and runs a full smoke test on a throwaway
+# Builds the Tallyra POS image and runs a full smoke test on a throwaway
 # container + volume, then cleans up. Requires Docker (run with sudo if needed).
 # Usage: sudo ./scripts/docker-smoke.sh
 set -euo pipefail
@@ -58,7 +58,7 @@ TOKEN=$(curl -sf -X POST "$BASE/api/v1/auth/login" \
   | python3 -c 'import sys,json; print(json.load(sys.stdin)["token"])') || fail "login"
 curl -sf "$BASE/api/v1/me" -H "Authorization: Bearer $TOKEN" | grep -q '"hasPersonalLedger":true' || fail "me endpoint"
 
-echo "==> Ledger read (seeded personal sales)"
+echo "==> Tallyra ledger read (seeded personal sales)"
 curl -sf "$BASE/api/v1/sales?ledger=personal" -H "Authorization: Bearer $TOKEN" \
   | python3 -c 'import sys,json; d=json.load(sys.stdin); assert len(d["sales"]) > 0, "no seeded sales"; print("  sales:", len(d["sales"]))' || fail "ledger read"
 

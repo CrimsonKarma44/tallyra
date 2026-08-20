@@ -27,7 +27,7 @@ const featureCards = [
     icon: "⇄",
   },
   {
-    title: "Ledger API",
+    title: "Tallyra API",
     body: "Other services can log in and create, list, update, or delete sales through /api/v1.",
     icon: "⌘",
   },
@@ -63,7 +63,7 @@ export default function LandingPage() {
           <p className="landing-kicker">POS transaction book</p>
           <h1>Replace the paper sales book.</h1>
           <p className="lede">
-            Ledger is a small web app for recording point-of-sale transactions — line items,
+            Tallyra is a small web app for recording point-of-sale transactions — line items,
             automatic totals, optional receivers, and a REST API so other services can keep the same
             books.
           </p>
@@ -86,7 +86,17 @@ export default function LandingPage() {
         <div className="landing-preview" aria-hidden="true">
           <div className="landing-preview-head">
             <span className="landing-preview-brand">
-              <span className="landing-preview-dot" /> Ledger
+              <svg className="landing-preview-logo" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                <rect width="24" height="24" rx="6" fill="var(--accent)" />
+                <g stroke="#f3eee4" strokeWidth="1.8" strokeLinecap="round" transform="translate(6 5.5)">
+                  <line x1="0" y1="0" x2="0" y2="12" />
+                  <line x1="4" y1="0" x2="4" y2="12" />
+                  <line x1="8" y1="0" x2="8" y2="12" />
+                  <line x1="12" y1="0" x2="12" y2="12" />
+                </g>
+                <line x1="8.5" y1="15" x2="15.5" y2="9" stroke="#57d0bc" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+              Tallyra
             </span>
             <span className="landing-preview-date">Today</span>
           </div>

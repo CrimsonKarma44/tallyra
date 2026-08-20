@@ -18,7 +18,7 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Ledger — POS transactions",
+  title: "Tallyra — POS transactions",
   description: "Record point-of-sale transactions in place of a paper sales book.",
 };
 

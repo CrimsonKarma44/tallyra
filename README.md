@@ -1,4 +1,4 @@
-# Ledger — POS Transaction Web App
+# Tallyra — POS Transaction Web App
 
 A small web app that replaces a paper sales book. Agents record point-of-sale transactions with line items; the app computes and stores subtotal, tax, and total. Other services can keep the same ledger through a versioned REST API.
 
@@ -114,7 +114,7 @@ The app listens on [http://localhost:3000](http://localhost:3000). On first boot
 The image is published to GitHub Container Registry on every push to GitHub (`latest` updates on `main`):
 
 ```bash
-docker run -d --name ledger-pos -p 3000:3000 \
+docker run -d --name tallyra-pos -p 3000:3000 \
   -v pos-data:/data \
   -e DATABASE_URL=file:/data/pos.db \
   -e AUTH_USERNAME=agent \

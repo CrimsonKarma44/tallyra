@@ -5,5 +5,5 @@ export function OPTIONS() {
 }
 
 export function GET() {
-  return json({ ok: true, service: "ledger", version: "v1" });
+  return json({ ok: true, service: "tallyra", version: "v1" });
 }
