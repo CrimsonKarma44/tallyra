@@ -9,7 +9,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  IMAGE: ghcr.io/crimsonkarma44/capstone-project-pos
+  IMAGE: ghcr.io/crimsonkarma44/tallyra
 
 permissions:
   contents: read

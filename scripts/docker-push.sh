@@ -6,7 +6,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-IMAGE="ghcr.io/crimsonkarma44/capstone-project-pos"
+IMAGE="ghcr.io/crimsonkarma44/tallyra"
 TAG="${1:-latest}"
 
 echo "==> Building $IMAGE:$TAG"

@@ -122,7 +122,7 @@ docker run -d --name tallyra-pos -p 3000:3000 \
   -e AUTH_USERNAME=agent \
   -e AUTH_PASSWORD=changeme \
   -e SESSION_SECRET=change-this-to-a-long-random-string-32ch \
-  ghcr.io/crimsonkarma44/capstone-project-pos:latest
+  ghcr.io/crimsonkarma44/tallyra:latest
 ```
 
 A healthcheck is built into the image (probes `/login`), so `docker ps` reports container health without extra setup.

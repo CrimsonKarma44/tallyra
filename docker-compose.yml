@@ -1,6 +1,6 @@
 services:
   app:
-    image: ghcr.io/crimsonkarma44/capstone-project-pos:latest
+    image: ghcr.io/crimsonkarma44/tallyra:latest
     build: .
     restart: unless-stopped
     ports:
