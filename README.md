@@ -4,6 +4,8 @@ A small web app that replaces a paper sales book. Agents record point-of-sale tr
 
 This is the SD-01 capstone MVP: **CRUD**, **totals**, **simple auth**, **HTTP API**, and a **runnable / deployable** repo. A demo video is not included.
 
+Live deployment: **[https://tallyra.onrender.com](https://tallyra.onrender.com)**
+
 ## Features
 
 - Sign in with a seeded agent account, or create a new agent account
