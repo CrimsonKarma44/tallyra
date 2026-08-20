@@ -24,6 +24,8 @@ export default async function SettingsPage() {
       email: true,
       displayName: true,
       avatarUpdatedAt: true,
+      deletionRequestedAt: true,
+      deletionReason: true,
     },
   });
   const org = user.organizationId
@@ -58,7 +60,7 @@ export default async function SettingsPage() {
 
   return (
     <main className="main settings-page">
-      <div className="sale-card">
+      <div className="sale-card settings-card">
         <h1>Settings</h1>
         <p className="lede">Your account for {user.username}.</p>
 
@@ -67,21 +69,23 @@ export default async function SettingsPage() {
           <p className="muted">
             Shown in the top bar. JPEG, PNG, or WebP, up to 2MB.
           </p>
-          <div className="avatar-preview">
-            {hasAvatar ? (
-              <Image
-                className="avatar avatar-large"
-                src={`/api/me/avatar?v=${avatarVersion}`}
-                alt="Your profile picture"
-                width={96}
-                height={96}
-                unoptimized
-              />
-            ) : (
-              <span className="avatar avatar-large avatar-fallback">{initial}</span>
-            )}
+          <div className="settings-profile">
+            <div className="avatar-preview">
+              {hasAvatar ? (
+                <Image
+                  className="avatar avatar-large"
+                  src={`/api/me/avatar?v=${avatarVersion}`}
+                  alt="Your profile picture"
+                  width={96}
+                  height={96}
+                  unoptimized
+                />
+              ) : (
+                <span className="avatar avatar-large avatar-fallback">{initial}</span>
+              )}
+            </div>
+            <AvatarForm hasAvatar={hasAvatar} />
           </div>
-          <AvatarForm hasAvatar={hasAvatar} />
         </section>
 
         <hr className="settings-divider" />
@@ -194,7 +198,12 @@ export default async function SettingsPage() {
 
         <section className="settings-section">
           <h2>Delete account</h2>
-          <DeleteAccountForm isOrgAdmin={user.isOrgAdmin} hasOtherMembers={hasOtherMembers} />
+          <DeleteAccountForm
+            isOrgAdmin={user.isOrgAdmin}
+            isOrgMember={Boolean(user.organizationId && !user.isOrgAdmin)}
+            hasOtherMembers={hasOtherMembers}
+            deletionPending={Boolean(record?.deletionRequestedAt)}
+          />
         </section>
       </div>
     </main>

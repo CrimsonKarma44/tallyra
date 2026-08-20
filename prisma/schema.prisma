@@ -22,6 +22,8 @@ model User {
   createdByOrgId  String?
   orgAdminOf      Organization? @relation("OrgAdmin")
   createdAt       DateTime      @default(now())
+  deletionRequestedAt DateTime?
+  deletionReason     String?
   sales           Transaction[]
   expenses        Expense[]
   authTokens      AuthToken[]

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { AddMemberForm } from "@/components/AddMemberForm";
 import { DeleteOrgForm } from "@/components/DeleteOrgForm";
+import { DeletionRequestActions } from "@/components/DeletionRequestActions";
 import { OrgEmailVerifyForm } from "@/components/OrgEmailVerifyForm";
 import { RemoveMemberButton } from "@/components/RemoveMemberButton";
 import { getOrgDetails } from "@/lib/org";
@@ -59,6 +60,7 @@ export default async function OrgPage() {
   if (!org) {
     notFound();
   }
+  const deletionRequests = org.members.filter((member) => member.deletionRequestedAt);
 
   return (
     <main className="main">
@@ -102,6 +104,43 @@ export default async function OrgPage() {
             <section className="settings-section">
               <h2>Verify organization email</h2>
               <OrgEmailVerifyForm />
+            </section>
+          </>
+        ) : null}
+
+        {user.isOrgAdmin && deletionRequests.length > 0 ? (
+          <>
+            <hr className="settings-divider" />
+            <section className="settings-section">
+              <h2>Deletion requests</h2>
+              <p className="muted">
+                These members asked to delete their accounts. Approving removes the member and
+                their access; their entries are reassigned to you.
+              </p>
+              <div className="table-wrap org-members">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Username</th>
+                      <th>Reason</th>
+                      <th>Requested</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {deletionRequests.map((member) => (
+                      <tr key={member.id}>
+                        <td>{member.displayName || member.username}</td>
+                        <td>{member.deletionReason || "—"}</td>
+                        <td>{member.deletionRequestedAt!.toLocaleDateString()}</td>
+                        <td>
+                          <DeletionRequestActions memberId={member.id} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </section>
           </>
         ) : null}

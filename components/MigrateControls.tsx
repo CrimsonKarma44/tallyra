@@ -16,9 +16,11 @@ export function MigrateControls({ direction, targetLabel, count }: Props) {
   );
   const formRef = useRef<HTMLFormElement>(null);
   const [allSelected, setAllSelected] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   function toggleAll(checked: boolean) {
     setAllSelected(checked);
+    setNotice(null);
     document
       .querySelectorAll<HTMLInputElement>('input[name="entryId"]')
       .forEach((input) => {
@@ -33,14 +35,21 @@ export function MigrateControls({ direction, targetLabel, count }: Props) {
   }
 
   function submitSelected() {
+    const selected = gatherSelected();
+    if (selected.length === 0) {
+      setNotice("Select at least one entry to move.");
+      return;
+    }
+    setNotice(null);
     const input = formRef.current?.querySelector<HTMLInputElement>('input[name="ids"]');
     if (input) {
-      input.value = JSON.stringify(gatherSelected());
+      input.value = JSON.stringify(selected);
     }
     formRef.current?.requestSubmit();
   }
 
   function submitAll() {
+    setNotice(null);
     const input = formRef.current?.querySelector<HTMLInputElement>('input[name="ids"]');
     if (input) {
       input.value = "";
@@ -51,18 +60,19 @@ export function MigrateControls({ direction, targetLabel, count }: Props) {
   return (
     <form ref={formRef} action={formAction} className="migrate-controls">
       {state?.error ? <p className="error">{state.error}</p> : null}
+      {notice ? <p className="error">{notice}</p> : null}
       <input type="hidden" name="direction" value={direction} />
       <input type="hidden" name="ids" value="" />
-      <div className="btn-row">
-        <label className="checkbox-row">
-          <input
-            type="checkbox"
-            checked={allSelected}
-            onChange={(event) => toggleAll(event.target.checked)}
-            disabled={count === 0}
-          />
-          <span>Select all ({count})</span>
-        </label>
+      <label className="checkbox-row">
+        <input
+          type="checkbox"
+          checked={allSelected}
+          onChange={(event) => toggleAll(event.target.checked)}
+          disabled={count === 0}
+        />
+        <span>Select all ({count})</span>
+      </label>
+      <div className="migrate-actions">
         <button
           className="btn btn-small"
           type="button"

@@ -1,7 +1,11 @@
-const DEFAULT_CURRENCY = "PHP";
+const DEFAULT_CURRENCY = "NGN";
 
 export function getCurrency(): string {
   return process.env.APP_CURRENCY?.trim() || DEFAULT_CURRENCY;
+}
+
+function localeFor(currency: string): string {
+  return currency === "NGN" ? "en-NG" : "en-PH";
 }
 
 /** Convert a decimal currency string ("25.50") to integer cents. */
@@ -22,7 +26,7 @@ export function centsToInput(cents: number): string {
 }
 
 export function formatCents(cents: number, currency = getCurrency()): string {
-  return new Intl.NumberFormat("en-PH", {
+  return new Intl.NumberFormat(localeFor(currency), {
     style: "currency",
     currency,
     minimumFractionDigits: 2,
@@ -30,7 +34,7 @@ export function formatCents(cents: number, currency = getCurrency()): string {
 }
 
 export function formatSoldAt(date: Date): string {
-  return new Intl.DateTimeFormat("en-PH", {
+  return new Intl.DateTimeFormat(localeFor(getCurrency()), {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(date);

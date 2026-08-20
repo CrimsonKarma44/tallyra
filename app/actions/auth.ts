@@ -15,6 +15,7 @@ import { createOrganizationWithAdmin } from "@/lib/org";
 import { getSession, requireUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { isMailConfigured, sendMail } from "@/lib/mail";
+import { assertEmailDomain } from "@/lib/email-check";
 import { AUTH_KIND, RESET_TTL_MS, VERIFY_TTL_MS, consumeAuthToken, createAuthToken } from "@/lib/otp";
 import { memberLoginAlertEmail, passwordResetEmail, verifyEmailEmail } from "@/lib/mail-templates";
 
@@ -107,6 +108,10 @@ export async function signupAction(prevState: AuthState, formData: FormData): Pr
   if (emailError) {
     return { error: emailError };
   }
+  const emailDomainError = await assertEmailDomain(email);
+  if (emailDomainError) {
+    return { error: emailDomainError };
+  }
 
   const needsVerification = isMailConfigured();
 
@@ -118,6 +123,10 @@ export async function signupAction(prevState: AuthState, formData: FormData): Pr
     const orgEmailError = validateEmail(orgEmail);
     if (orgEmailError) {
       return { error: `Company email: ${orgEmailError.toLowerCase()}` };
+    }
+    const orgEmailDomainError = await assertEmailDomain(orgEmail);
+    if (orgEmailDomainError) {
+      return { error: `Company email: ${orgEmailDomainError.toLowerCase()}` };
     }
     const created = await createOrganizationWithAdmin(orgName, orgEmail, username, email, password);
     if (!created.ok) {

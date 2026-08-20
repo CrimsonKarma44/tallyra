@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import type { AuthState } from "@/app/actions/auth";
+import { PasswordField } from "@/components/PasswordField";
 
 type Props = {
   action: (state: AuthState, formData: FormData) => Promise<AuthState>;
@@ -23,10 +24,12 @@ export function LoginForm({ action, nextPath }: Props) {
         </label>
       </p>
       <p>
-        <label>
-          Password
-          <input name="password" type="password" autoComplete="current-password" required />
-        </label>
+        <PasswordField
+          name="password"
+          label="Password"
+          autoComplete="current-password"
+          required
+        />
       </p>
       <div className="forgot-row">
         <Link href="/forgot-password">Forgot password?</Link>

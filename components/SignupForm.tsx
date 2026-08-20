@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import type { AuthState } from "@/app/actions/auth";
+import { PasswordField } from "@/components/PasswordField";
 
 type Props = {
   action: (state: AuthState, formData: FormData) => Promise<AuthState>;
@@ -29,16 +30,22 @@ export function SignupForm({ action, nextPath }: Props) {
         </label>
       </p>
       <p>
-        <label>
-          Password
-          <input name="password" type="password" autoComplete="new-password" required minLength={8} />
-        </label>
+        <PasswordField
+          name="password"
+          label="Password"
+          autoComplete="new-password"
+          required
+          minLength={8}
+        />
       </p>
       <p>
-        <label>
-          Confirm password
-          <input name="confirm" type="password" autoComplete="new-password" required minLength={8} />
-        </label>
+        <PasswordField
+          name="confirm"
+          label="Confirm password"
+          autoComplete="new-password"
+          required
+          minLength={8}
+        />
       </p>
       <fieldset className="account-type">
         <legend>Account type</legend>

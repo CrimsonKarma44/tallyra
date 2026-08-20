@@ -14,7 +14,7 @@ export function AvatarForm({ hasAvatar }: { hasAvatar: boolean }) {
   );
 
   return (
-    <form action={formAction}>
+    <form action={formAction} className="avatar-form">
       {state?.error ? <p className="error">{state.error}</p> : null}
       {state?.success ? <p className="success">{state.success}</p> : null}
       <label>

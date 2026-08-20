@@ -132,6 +132,35 @@ a:hover {
   border-color: #7a7166;
 }
 
+.password-field {
+  position: relative;
+  display: block;
+}
+
+.password-field input {
+  padding-right: 2.6rem;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.35rem;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.password-toggle:hover {
+  color: var(--ink);
+}
+
 .account-type {
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -247,6 +276,66 @@ a:hover {
 .settings-section .muted {
   margin: 0 0 0.9rem;
   font-size: 0.9rem;
+}
+
+.settings-card {
+  max-width: 680px;
+  margin-inline: auto;
+}
+
+.settings-section h2,
+.settings-section > .muted {
+  text-align: center;
+}
+
+.settings-card h1,
+.settings-card .lede {
+  text-align: center;
+}
+
+.settings-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.settings-profile .avatar-preview {
+  margin: 0;
+}
+
+.avatar-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: min(360px, 100%);
+  margin-inline: auto;
+}
+
+.avatar-form label {
+  width: 100%;
+}
+
+.avatar-form .btn-row {
+  justify-content: center;
+}
+
+.field-row {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.field-row .field-grow {
+  flex: 1;
+  min-width: 220px;
+}
+
+.field-row .btn {
+  min-height: 2.6rem;
+  white-space: nowrap;
 }
 
 .avatar-preview {
@@ -1267,15 +1356,27 @@ th.num {
 }
 
 .migrate-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
   margin: 0 0 1rem;
+  padding: 0.8rem 1rem;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
 }
 
 .migrate-controls .error {
-  margin: 0 0 0.5rem;
+  flex-basis: 100%;
+  margin: 0;
 }
 
-.migrate-controls .btn-row {
-  margin: 0;
+.migrate-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
 }
 
 .checkbox-row {

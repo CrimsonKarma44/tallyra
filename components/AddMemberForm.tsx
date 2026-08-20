@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { addMemberAction, type OrgActionState } from "@/app/actions/org";
+import { PasswordField } from "@/components/PasswordField";
 
 export function AddMemberForm() {
   const [state, formAction, pending] = useActionState<OrgActionState, FormData>(
@@ -21,14 +22,20 @@ export function AddMemberForm() {
         Email
         <input name="email" type="email" autoComplete="off" required maxLength={254} />
       </label>
-      <label>
-        Password
-        <input name="password" type="password" autoComplete="new-password" required minLength={8} />
-      </label>
-      <label>
-        Confirm password
-        <input name="confirm" type="password" autoComplete="new-password" required minLength={8} />
-      </label>
+      <PasswordField
+        name="password"
+        label="Password"
+        autoComplete="new-password"
+        required
+        minLength={8}
+      />
+      <PasswordField
+        name="confirm"
+        label="Confirm password"
+        autoComplete="new-password"
+        required
+        minLength={8}
+      />
       <div className="btn-row">
         <button className="btn" type="submit" disabled={pending}>
           {pending ? "Adding…" : "Add member"}

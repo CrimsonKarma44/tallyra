@@ -90,6 +90,8 @@ export async function getOrgDetails(orgId: string) {
           username: true,
           displayName: true,
           createdAt: true,
+          deletionRequestedAt: true,
+          deletionReason: true,
         },
         orderBy: { createdAt: "asc" },
       },

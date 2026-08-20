@@ -92,3 +92,22 @@ export function memberLoginAlertEmail(opts: { orgName: string; username: string;
   );
   return { subject, text, html };
 }
+
+export function accountDeletionRequestEmail(opts: {
+  orgName: string;
+  memberUsername: string;
+  reason?: string;
+}) {
+  const subject = `Account deletion request in ${opts.orgName}`;
+  const reasonLine = opts.reason
+    ? `\n     <p style="margin:0 0 4px;font-size:14px;">Reason: ${opts.reason}</p>`
+    : "";
+  const text = `${opts.memberUsername} requested to delete their account in ${opts.orgName}. Sign in and open the Organization page to approve or dismiss the request.`;
+  const html = emailLayout(
+    subject,
+    `<p style="margin:0 0 8px;font-size:14px;line-height:1.5;">A member asked to delete their account.</p>
+     <p style="margin:0 0 4px;font-size:14px;">Username: <strong>${opts.memberUsername}</strong></p>${reasonLine}
+     <p style="margin:12px 0 0;font-size:14px;">Sign in and open the <strong>Organization</strong> page to approve or dismiss the request.</p>`,
+  );
+  return { subject, text, html };
+}

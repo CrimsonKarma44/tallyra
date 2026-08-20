@@ -46,6 +46,13 @@ function toFormDraft(draft: ReceiptDraft): ScannedSaleDraft {
   };
 }
 
+const GENERIC_ERROR =
+  "Receipt scanning is unavailable at the moment. Try again in a few minutes.";
+
+function looksLikeStructuredError(message: string): boolean {
+  return /[{}]/.test(message) || /^\s*[\[{]/.test(message) || /"error"/i.test(message);
+}
+
 export function apiErrorMessage(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error ?? "");
 
@@ -58,7 +65,10 @@ export function apiErrorMessage(error: unknown): string {
   if (/not found|404|model/i.test(message) && /gemini/i.test(message)) {
     return "That Gemini model is not available for this key. Set GEMINI_MODEL to a vision model you can use.";
   }
-  return message || "Could not read that receipt. Try again or enter the sale by hand.";
+  if (looksLikeStructuredError(message)) {
+    return GENERIC_ERROR;
+  }
+  return GENERIC_ERROR;
 }
 
 export async function scanReceiptImage(formData: FormData): Promise<ScanReceiptResult> {
@@ -104,6 +114,7 @@ export async function scanReceiptImage(formData: FormData): Promise<ScanReceiptR
     }
     return { draft: toFormDraft(modelTextToDraft(text)) };
   } catch (error) {
+    console.error("[receipt-scan] failed:", error instanceof Error ? error.message : error);
     return { error: apiErrorMessage(error) };
   }
 }

@@ -13,11 +13,11 @@ export function ProfileForm({ displayName }: { displayName: string }) {
     <form action={formAction}>
       {state?.error ? <p className="error">{state.error}</p> : null}
       {state?.success ? <p className="success">{state.success}</p> : null}
-      <label>
-        Display name
-        <input name="displayName" defaultValue={displayName} maxLength={40} autoComplete="off" />
-      </label>
-      <div className="btn-row">
+      <div className="field-row">
+        <label className="field-grow">
+          Display name
+          <input name="displayName" defaultValue={displayName} maxLength={40} autoComplete="off" />
+        </label>
         <button className="btn" type="submit" disabled={pending}>
           {pending ? "Saving…" : "Save"}
         </button>

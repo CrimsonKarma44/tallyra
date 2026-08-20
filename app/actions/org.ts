@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { normalizeUsername, validateEmail, validateOrgName, validatePassword, validateUsername } from "@/lib/auth";
+import { assertEmailDomain } from "@/lib/email-check";
+import { resolveMigrateSelection } from "@/lib/migrate";
 import {
   addOrgMember,
   createOrganizationForExistingUser,
@@ -40,6 +42,10 @@ export async function addMemberAction(
   const emailError = validateEmail(email);
   if (emailError) {
     return { error: emailError };
+  }
+  const domainError = await assertEmailDomain(email);
+  if (domainError) {
+    return { error: domainError };
   }
   const passwordError = validatePassword(password);
   if (passwordError) {
@@ -275,15 +281,13 @@ export async function migrateEntriesAction(
 ): Promise<OrgActionState> {
   const user = await requireVerifiedUser();
   const direction = String(formData.get("direction") ?? "");
-  const idsRaw = String(formData.get("ids") ?? "");
+  const selection = resolveMigrateSelection(String(formData.get("ids") ?? ""));
   let ids: string[] = [];
-  if (idsRaw) {
-    try {
-      const parsed = JSON.parse(idsRaw);
-      ids = Array.isArray(parsed) ? parsed.map(String) : [];
-    } catch {
-      return { error: "Entry selection could not be read." };
+  if (selection.kind === "selected") {
+    if (selection.ids.length === 0) {
+      return { error: "Select at least one entry to move." };
     }
+    ids = selection.ids;
   }
   if (direction === "to-org") {
     if (!user.organizationId) {

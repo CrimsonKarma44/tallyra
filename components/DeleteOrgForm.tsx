@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { deleteOrgAction, type OrgActionState } from "@/app/actions/org";
+import { PasswordField } from "@/components/PasswordField";
 
 export function DeleteOrgForm() {
   const [state, formAction, pending] = useActionState<OrgActionState, FormData>(
@@ -17,16 +18,13 @@ export function DeleteOrgForm() {
         Deletes the organization. Members&apos; sales and expenses are reassigned to your
         personal ledger and the member accounts are removed. Your account stays.
       </p>
-      <label>
-        Current password
-        <input
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          required
-          minLength={8}
-        />
-      </label>
+      <PasswordField
+        name="password"
+        label="Current password"
+        autoComplete="current-password"
+        required
+        minLength={8}
+      />
       <div className="btn-row">
         <button className="btn btn-danger" type="submit" disabled={pending}>
           {pending ? "Deleting…" : "Delete organization"}

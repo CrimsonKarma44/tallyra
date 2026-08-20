@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { resetPasswordAction, type OtpState } from "@/app/actions/auth";
+import { PasswordField } from "@/components/PasswordField";
 
 export function ResetPasswordForm({ username }: { username?: string }) {
   const [state, formAction, pending] = useActionState<OtpState, FormData>(
@@ -32,16 +33,22 @@ export function ResetPasswordForm({ username }: { username?: string }) {
         </label>
       </p>
       <p>
-        <label>
-          New password
-          <input name="password" type="password" autoComplete="new-password" required minLength={8} />
-        </label>
+        <PasswordField
+          name="password"
+          label="New password"
+          autoComplete="new-password"
+          required
+          minLength={8}
+        />
       </p>
       <p>
-        <label>
-          Confirm new password
-          <input name="confirm" type="password" autoComplete="new-password" required minLength={8} />
-        </label>
+        <PasswordField
+          name="confirm"
+          label="Confirm new password"
+          autoComplete="new-password"
+          required
+          minLength={8}
+        />
       </p>
       <div className="btn-row">
         <button className="btn" type="submit" disabled={pending}>

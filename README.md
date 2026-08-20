@@ -88,7 +88,7 @@ A personal account can create an organization from `/settings` → **Create an o
 | `AUTH_USERNAME` | Seeded agent username |
 | `AUTH_PASSWORD` | Seeded agent password (re-hashed on each seed) |
 | `SESSION_SECRET` | Cookie signing key, **at least 32 characters** |
-| `APP_CURRENCY` | Display currency, default `PHP` |
+| `APP_CURRENCY` | Display currency, default `NGN` (₦) |
 | `GEMINI_API_KEY` | Gemini key for receipt scan. Optional; manual entry works without it |
 | `GEMINI_MODEL` | Vision model, default `gemini-3.7-flash` |
 | `BREVO_API_KEY` | Brevo HTTPS email API key (preferred; works where SMTP ports are blocked, e.g. Render free tier). Takes precedence over SMTP |
@@ -157,7 +157,7 @@ DATABASE_URL=file:/data/pos.db
 AUTH_USERNAME=...
 AUTH_PASSWORD=...
 SESSION_SECRET=...   # 32+ random characters
-APP_CURRENCY=PHP
+APP_CURRENCY=NGN
 ```
 
 ## Data model
