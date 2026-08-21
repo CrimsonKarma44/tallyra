@@ -12,6 +12,7 @@
     "db:setup": "prisma migrate deploy && prisma db seed",
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
+    "db:demo": "tsx prisma/demo-seed.ts",
     "postinstall": "prisma generate",
     "verify": "bash scripts/verify.sh"
   },
