@@ -17,10 +17,9 @@ type SaleSample = {
 };
 type ExpenseSample = { spentAt: Date; amountCents: number; note: string };
 
-function daysAgo(n: number, hour = 10, minute = 0): Date {
-  const d = new Date(NOW.getTime() - n * DAY_MS);
-  d.setHours(hour, minute, 0, 0);
-  return d;
+function pickRandom<T>(arr: T[], count: number): T[] {
+  const shuffled = [...arr].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, count);
 }
 
 const SALE_TEMPLATES: SaleSample[] = [
@@ -85,11 +84,6 @@ const EXPENSE_TEMPLATES: ExpenseSample[] = [
     note: "Bought crates of soft drinks and water",
   },
 ];
-
-function pickRandom<T>(arr: T[], count: number): T[] {
-  const shuffled = [...arr].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, count);
-}
 
 function applyTimeOffset(samples: { soldAt?: Date; spentAt?: Date }[], daysOffset: number, baseHour = 9) {
   return samples.map((s, i) => {

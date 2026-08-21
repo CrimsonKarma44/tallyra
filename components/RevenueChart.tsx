@@ -1,4 +1,3 @@
-import { getCurrency } from "@/lib/money";
 import type { DayPoint } from "@/lib/analytics";
 
 const W = 720;
@@ -19,13 +18,12 @@ function niceMax(value: number): number {
 }
 
 function shortMoney(cents: number): string {
-  const currency = getCurrency();
-  return new Intl.NumberFormat("en-PH", {
-    style: "currency",
-    currency,
+  const formatted = new Intl.NumberFormat("en-NG", {
+    style: "decimal",
     notation: "compact",
     maximumFractionDigits: 1,
   }).format(cents / 100);
+  return `₦${formatted}`;
 }
 
 function tickLabel(dateKey: string): string {

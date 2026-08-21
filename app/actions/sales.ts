@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { pesosToCents } from "@/lib/money";
+import { parseCents } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 import { editScope, saleQueryWhere, saleScope, type UserContext } from "@/lib/sales-service";
 import { requireVerifiedUser } from "@/lib/session";
@@ -62,7 +62,7 @@ function parseLines(formData: FormData): LineInput[] {
   return lines.data.map((line) => ({
     name: line.name,
     quantity: line.quantity,
-    unitPriceCents: pesosToCents(line.unitPrice),
+    unitPriceCents: parseCents(line.unitPrice),
   }));
 }
 

@@ -9,7 +9,7 @@ function localeFor(currency: string): string {
 }
 
 /** Convert a decimal currency string ("25.50") to integer cents. */
-export function pesosToCents(raw: string): number {
+export function parseCents(raw: string): number {
   const trimmed = raw.trim();
   if (!trimmed) {
     throw new Error("Price is required.");
@@ -26,11 +26,12 @@ export function centsToInput(cents: number): string {
 }
 
 export function formatCents(cents: number, currency = getCurrency()): string {
-  return new Intl.NumberFormat(localeFor(currency), {
-    style: "currency",
-    currency,
+  const formatted = new Intl.NumberFormat(localeFor(currency), {
+    style: "decimal",
     minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(cents / 100);
+  return `₦${formatted}`;
 }
 
 export function formatSoldAt(date: Date): string {

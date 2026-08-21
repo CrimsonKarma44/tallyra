@@ -110,14 +110,14 @@ export default function LandingPage() {
               <div className="landing-preview-row" key={row.id}>
                 <span className="mono">{row.id}</span>
                 <span>{row.item}</span>
-                <span className="mono">₱ {row.total}</span>
+                <span className="mono">₦ {row.total}</span>
               </div>
             ))}
           </div>
           <div className="landing-preview-foot">
             <span className="landing-preview-badge">Auto-computed totals</span>
             <span className="landing-preview-sum">
-              Today <strong className="mono">₱ 3,349.80</strong>
+              Today <strong className="mono">₦ 3,349.80</strong>
             </span>
           </div>
         </div>

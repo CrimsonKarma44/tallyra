@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { getCurrency, pesosToCents } from "@/lib/money";
+import { getCurrency, parseCents } from "@/lib/money";
 import {
   editScope,
   resolveUserContext,
@@ -33,7 +33,7 @@ export function parseExpenseWrite(input: unknown) {
   }
   let amountCents: number;
   try {
-    amountCents = pesosToCents(String(data.amount));
+    amountCents = parseCents(String(data.amount));
   } catch {
     throw new ExpenseValidationError("Amount must be greater than zero.");
   }
