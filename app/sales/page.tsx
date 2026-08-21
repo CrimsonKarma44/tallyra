@@ -141,10 +141,10 @@ export default async function SalesPage({
               ) : null}
             </div>
 
-            {analytics.byAgent && analytics.byAgent.length > 0 ? (
+            {/*{analytics.byAgent && analytics.byAgent.length > 0 ? (
               <div className="card table-wrap">
                 <div className="card-head">
-                  <h2>By agent</h2>
+                  <h2>By gent</h2>
                 </div>
                 <table>
                   <thead>
@@ -171,12 +171,12 @@ export default async function SalesPage({
                   </tbody>
                 </table>
               </div>
-            ) : null}
+            ) : null}*/}
           </>
         )}
       </section>
 
-      <form className="filters" method="get">
+      <form className="filters" method="gbtn-ghostet">
         <label>
           Search
           <input name="q" defaultValue={q} placeholder="Item, note, receiver, or agent" />

@@ -82,7 +82,7 @@ export function MigrateControls({ direction, targetLabel, count }: Props) {
           Move selected to {targetLabel}
         </button>
         <button
-          className="btn btn-small btn-ghost"
+          className="btn btn-small btn-secondary"
           type="button"
           onClick={submitAll}
           disabled={pending || count === 0}

@@ -30,7 +30,7 @@ export function DeletionRequestActions({ memberId }: { memberId: string }) {
         </form>
         <form action={dismissFormAction}>
           <input type="hidden" name="memberId" value={memberId} />
-          <button className="btn btn-small btn-ghost" type="submit" disabled={dismissPending}>
+          <button className="btn btn-small btn-secondary" type="submit" disabled={dismissPending}>
             {dismissPending ? "Dismissing…" : "Dismiss"}
           </button>
         </form>
